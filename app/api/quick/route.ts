@@ -8,8 +8,6 @@ const schema = z.object({
   count: z.coerce.number().int().min(3).max(20).optional().default(10),
 });
 
-const client = new Anthropic();
-
 export async function POST(request: Request) {
   try {
     await requireUser();
@@ -36,6 +34,7 @@ export async function POST(request: Request) {
   const { prompt, count } = parsed.data;
 
   try {
+    const client = new Anthropic();
     const message = await client.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 3000,

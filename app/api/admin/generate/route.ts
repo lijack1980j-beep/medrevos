@@ -9,8 +9,6 @@ const requestSchema = z.object({
   questionCount: z.number().int().min(0).max(10),
 });
 
-const client = new Anthropic();
-
 export async function POST(request: Request) {
   try {
     await requireAdmin();
@@ -95,6 +93,7 @@ export async function POST(request: Request) {
   };
 
   try {
+    const client = new Anthropic();
     const message = await client.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 4096,
