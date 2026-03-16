@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { StatCard } from '@/components/StatCard';
 import { ExamCountdown } from '@/components/ExamCountdown';
+import { DailyGoalWidget } from '@/components/DailyGoalWidget';
+import { MasteryBar } from '@/components/MasteryBar';
 import { calculateStreak, percent, readinessScore } from '@/lib/analytics';
 
 export default async function DashboardPage() {
@@ -21,6 +23,10 @@ export default async function DashboardPage() {
 
   const reviewedCardCount = await prisma.userFlashcardState.count({ where: { userId: user.id } });
   const dueCards = dueStateCount + Math.max(0, totalCards - reviewedCardCount);
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayAttempts = attempts.filter(a => a.createdAt.toISOString().slice(0, 10) === todayStr).length;
+
   const correct = attempts.filter(a => a.isCorrect).length;
   const accuracy = percent(correct, attempts.length);
   const uniqueStudyDays = reviews.map(r => r.reviewedAt.toISOString().slice(0, 10));
@@ -86,6 +92,8 @@ export default async function DashboardPage() {
         <StatCard title="Due Cards"    value={dueCards}          helper="In your personal queue"                   trend={dueCards < 10 ? 'up' : dueCards < 30 ? 'neutral' : 'down'} gradient="orange" />
       </section>
 
+      <DailyGoalWidget todayAttempts={todayAttempts} />
+
       <section className="grid cols-2">
 
         <div className="panel">
@@ -95,7 +103,7 @@ export default async function DashboardPage() {
           </div>
           <div className="dash-topic-list">
             {weakTopics.length ? weakTopics.map((entry, i) => (
-              <Link key={entry.id} href={`/study?topic=${entry.topic.slug}`} className="dash-topic-row">
+              <div key={entry.id} className="dash-topic-row">
                 <div className={`dash-topic-rank${i < 2 ? ' dash-topic-rank--crit' : ' dash-topic-rank--warn'}`}>
                   {i + 1}
                 </div>
@@ -104,12 +112,13 @@ export default async function DashboardPage() {
                     <span className="dash-topic-name">{entry.topic.title}</span>
                     <span className="dash-topic-pct">{entry.masteryPercent}%</span>
                   </div>
-                  <div className="progress">
-                    <span className="dash-progress-fill" style={{ '--w': `${entry.masteryPercent}%` } as React.CSSProperties} />
-                  </div>
+                  <MasteryBar pct={entry.masteryPercent} />
                 </div>
-                <span className="dash-topic-arrow">→</span>
-              </Link>
+                <div className="dash-topic-actions">
+                  <Link href={`/study?topic=${entry.topic.slug}`} className="dash-topic-btn">Study</Link>
+                  <Link href={`/questions?topic=${entry.topic.slug}`} className="dash-topic-btn dash-topic-btn--drill">Drill</Link>
+                </div>
+              </div>
             )) : (
               <p className="muted">No mastery data yet. Solve questions to populate your weak-area map.</p>
             )}
@@ -123,7 +132,7 @@ export default async function DashboardPage() {
           </div>
           <div className="dash-actions-list">
             {actions.map(action => (
-              <Link key={action.href} href={action.href} className="dash-action">
+              <Link key={action.href} href={action.href as any} className="dash-action">
                 <span className="dash-action-icon">{action.icon}</span>
                 <div className="dash-action-body">
                   <span className="dash-action-label">{action.label}</span>

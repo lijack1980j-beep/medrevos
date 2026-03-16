@@ -1,6 +1,8 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { MainNav } from '@/components/MainNav';
+import { ShortcutModal } from '@/components/ShortcutModal';
+import { PomodoroTimer } from '@/components/PomodoroTimer';
 
 export const metadata: Metadata = {
   title: 'Med Revision OS V2',
@@ -18,6 +20,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <MainNav />
           <main className="main-content">{children}</main>
         </div>
+        <ShortcutModal />
+        <PomodoroTimer />
       </body>
     </html>
   );

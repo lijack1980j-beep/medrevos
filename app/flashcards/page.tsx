@@ -6,10 +6,11 @@ import { requireUser } from '@/lib/auth';
 export default async function FlashcardsPage({
   searchParams,
 }: {
-  searchParams: { topic?: string };
+  searchParams: { topic?: string; mode?: string };
 }) {
   const user = await requireUser();
   const selectedSlug = searchParams.topic ?? null;
+  const freeMode = searchParams.mode === 'free';
 
   // All flashcards with their topic info
   const [allCards, states] = await Promise.all([
@@ -44,7 +45,9 @@ export default async function FlashcardsPage({
   const filteredCards = allCards.filter(c =>
     selectedSlug ? c.topic.slug === selectedSlug : true
   );
-  const dueCards = filteredCards.filter(c => isDue(c.id)).slice(0, 40);
+  const dueCards = freeMode
+    ? filteredCards.slice(0, 60)
+    : filteredCards.filter(c => isDue(c.id)).slice(0, 40);
 
   const totalDue = allCards.filter(c => isDue(c.id)).length;
   const selectedTopic = selectedSlug ? topicMap.get(selectedSlug) : null;
@@ -88,30 +91,36 @@ export default async function FlashcardsPage({
       {/* ── Review area ── */}
       <main className="fc-main">
         <div className="fc-main-header center-text">
-          <div className="kicker">Spaced repetition</div>
+          <div className="kicker">{freeMode ? 'Free review' : 'Spaced repetition'}</div>
           <h1>{selectedTopic ? selectedTopic.title : 'Flashcard review'}</h1>
           <p className="muted">
-            {selectedTopic
-              ? `${dueCards.length} card${dueCards.length !== 1 ? 's' : ''} due in this topic`
-              : `${totalDue} card${totalDue !== 1 ? 's' : ''} due across all topics`}
+            {freeMode
+              ? `${dueCards.length} card${dueCards.length !== 1 ? 's' : ''} — reviewing all, no scheduling`
+              : selectedTopic
+                ? `${dueCards.length} card${dueCards.length !== 1 ? 's' : ''} due in this topic`
+                : `${totalDue} card${totalDue !== 1 ? 's' : ''} due across all topics`}
           </p>
+          <div className="fc-mode-toggle">
+            <Link href={`/flashcards${selectedSlug ? `?topic=${selectedSlug}` : ''}` as any} className={`fc-mode-btn${!freeMode ? ' fc-mode-btn--active' : ''}`}>SRS</Link>
+            <Link href={`/flashcards?${selectedSlug ? `topic=${selectedSlug}&` : ''}mode=free` as any} className={`fc-mode-btn${freeMode ? ' fc-mode-btn--active' : ''}`}>Free review</Link>
+          </div>
         </div>
 
         {dueCards.length === 0 ? (
           <div className="fc-no-due panel">
-            <p className="fc-no-due-emoji">✓</p>
+            <div className="fc-no-due-emoji">✓</div>
             <h3>All caught up{selectedTopic ? ` in ${selectedTopic.title}` : ''}!</h3>
-            <p className="muted">No cards due right now. Check back later or pick another topic.</p>
-            {selectedSlug && (
-              <Link href="/flashcards" className="btn secondary">
-                Review all topics
-              </Link>
-            )}
+            <p className="muted">No cards due right now. Switch to Free review to practice anyway, or pick another topic.</p>
+            <div className="fc-no-due-actions">
+              <Link href={`/flashcards?${selectedSlug ? `topic=${selectedSlug}&` : ''}mode=free`} className="btn primary">Free review</Link>
+              {selectedSlug && <Link href="/flashcards" className="btn secondary">All topics</Link>}
+            </div>
           </div>
         ) : (
           <FlashcardReviewClient
-            key={selectedSlug ?? 'all'}
+            key={`${selectedSlug ?? 'all'}-${freeMode ? 'free' : 'srs'}`}
             initialCards={dueCards.map(c => ({ ...c, dueDate: new Date().toISOString() }))}
+            freeMode={freeMode}
           />
         )}
       </main>

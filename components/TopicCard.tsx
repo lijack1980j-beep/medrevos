@@ -12,14 +12,19 @@ type TopicCardTopic = {
   _count?: { flashcards: number; questions: number };
 };
 
-export function TopicCard({ topic }: { topic: TopicCardTopic }) {
+export function TopicCard({ topic, mastery }: { topic: TopicCardTopic; mastery?: number }) {
   const diffHue = 120 - topic.difficulty * 24;
+  const completed = (mastery ?? 0) >= 80;
 
   return (
-    <div className="topic-card topic-card-flex">
+    <div className={`topic-card topic-card-flex${completed ? ' topic-card--completed' : ''}`}>
       <div className="topic-card-badges">
         <span className="badge">{topic.system}</span>
         {topic.highYield && <span className="badge badge--hy">High Yield</span>}
+        {completed && <span className="badge badge--done" title={`${mastery}% mastery`}>✓ Mastered</span>}
+        {!completed && mastery !== undefined && mastery > 0 && (
+          <span className="badge badge--progress">{mastery}%</span>
+        )}
       </div>
 
       <h3 className="topic-card-title">{topic.title}</h3>

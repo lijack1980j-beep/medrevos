@@ -20,11 +20,14 @@ export default async function StudyPage({ searchParams }: { searchParams?: { top
   const lesson = active?.lessons[0];
 
   let noteContent = '';
+  let progressMap: Record<string, number> = {};
   if (user && active) {
-    const note = await prisma.topicNote.findUnique({
-      where: { userId_topicId: { userId: user.id, topicId: active.id } },
-    });
+    const [note, progressRows] = await Promise.all([
+      prisma.topicNote.findUnique({ where: { userId_topicId: { userId: user.id, topicId: active.id } } }),
+      prisma.userTopicProgress.findMany({ where: { userId: user.id }, select: { topicId: true, masteryPercent: true } }),
+    ]);
     noteContent = note?.content ?? '';
+    progressMap = Object.fromEntries(progressRows.map(p => [p.topicId, p.masteryPercent]));
   }
 
   return (
@@ -41,21 +44,29 @@ export default async function StudyPage({ searchParams }: { searchParams?: { top
         <div className="panel study-sidebar">
           <div className="study-sidebar-title">Topics</div>
           <nav className="study-sidebar-list">
-            {topics.map(t => (
-              <Link
-                key={t.id}
-                href={`/study?topic=${t.slug}`}
-                className={`study-topic-link${t.slug === active?.slug ? ' study-topic-link--active' : ''}`}
-              >
-                <div className="study-topic-link-main">
-                  <span className="study-topic-link-name">{t.title}</span>
-                  {t.highYield && <span className="study-hy-dot" title="High yield" />}
-                </div>
-                <span className="study-topic-link-meta">
-                  {t._count.questions}Q · {t._count.flashcards}FC
-                </span>
-              </Link>
-            ))}
+            {topics.map(t => {
+              const mastery = progressMap[t.id] ?? 0;
+              return (
+                <Link
+                  key={t.id}
+                  href={`/study?topic=${t.slug}`}
+                  className={`study-topic-link${t.slug === active?.slug ? ' study-topic-link--active' : ''}`}
+                >
+                  <div className="study-topic-link-main">
+                    <span className="study-topic-link-name">{t.title}</span>
+                    {t.highYield && <span className="study-hy-dot" title="High yield" />}
+                  </div>
+                  <div className="study-topic-link-bottom">
+                    <span className="study-topic-link-meta">{t._count.questions}Q · {t._count.flashcards}FC</span>
+                    {mastery > 0 && (
+                      <span className={`study-mastery-pill${mastery >= 80 ? ' study-mastery-pill--good' : mastery >= 50 ? ' study-mastery-pill--ok' : ' study-mastery-pill--low'}`}>
+                        {mastery}%
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
           </nav>
         </div>
 

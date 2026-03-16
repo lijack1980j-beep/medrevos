@@ -9,7 +9,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
   const [questions, bookmarks] = await Promise.all([
     prisma.question.findMany({
       where: topicSlug ? { topic: { slug: topicSlug } } : undefined,
-      include: { options: true, topic: { select: { title: true, system: true } } },
+      include: { options: true, topic: true },
       orderBy: { createdAt: 'asc' },
     }),
     user

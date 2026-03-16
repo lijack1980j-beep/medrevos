@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { LogoutButton } from '@/components/LogoutButton';
 import { NavLinks } from '@/components/NavLinks';
 import { SearchInput } from '@/components/SearchInput';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export async function MainNav() {
   const user = await getCurrentUser();
@@ -13,9 +14,10 @@ export async function MainNav() {
         <NavLinks isAdmin={user?.role === 'ADMIN'} />
         <SearchInput />
         <div className="row">
+          <ThemeToggle />
           {user ? (
             <>
-              <span className="muted small-text">{user.name} · {user.role}</span>
+              <Link href="/settings" className="muted small-text nav-settings-link">{user.name} · {user.role}</Link>
               <LogoutButton />
             </>
           ) : (

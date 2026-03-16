@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { TopicCard } from '@/components/TopicCard';
 import { getCurrentUser } from '@/lib/auth';
 import { percent, readinessScore, calculateStreak } from '@/lib/analytics';
+import { OnboardingModal } from '@/components/OnboardingModal';
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -25,19 +26,22 @@ export default async function HomePage() {
   // Personalised banner for logged-in users
   let dueCards = 0;
   let readiness = 0;
+  let masteryMap: Record<string, number> = {};
   if (user) {
-    const [totalCards, dueStateCount, userAttempts, userReviews, userFlashcardCount] = await Promise.all([
+    const [totalCards, dueStateCount, userAttempts, userReviews, userFlashcardCount, progressRows] = await Promise.all([
       cards,
       prisma.userFlashcardState.count({ where: { userId: user.id, dueDate: { lte: new Date() } } }),
       prisma.questionAttempt.findMany({ where: { userId: user.id } }),
       prisma.flashcardReview.findMany({ where: { userId: user.id }, orderBy: { reviewedAt: 'desc' } }),
       prisma.userFlashcardState.count({ where: { userId: user.id } }),
+      prisma.userTopicProgress.findMany({ where: { userId: user.id }, select: { topicId: true, masteryPercent: true } }),
     ]);
     dueCards = dueStateCount + Math.max(0, totalCards - userFlashcardCount);
     const correct = userAttempts.filter(a => a.isCorrect).length;
     const accuracy = percent(correct, userAttempts.length);
     const streak = calculateStreak(userReviews.map(r => r.reviewedAt.toISOString().slice(0, 10)));
     readiness = readinessScore(accuracy, dueCards, streak);
+    masteryMap = Object.fromEntries(progressRows.map(p => [p.topicId, p.masteryPercent]));
   }
 
   return (
@@ -64,7 +68,7 @@ export default async function HomePage() {
               {dueCards === 0 && <Link href="/questions" className="btn secondary">Drill questions</Link>}
             </div>
           </div>
-          <div className="panel home-welcome-stat">
+          <div className="home-welcome-stat">
             <div className="home-stat-row">
               <div className="home-stat">
                 <div className="home-stat-value">{readiness}%</div>
@@ -121,12 +125,13 @@ export default async function HomePage() {
 
       <section className="grid cols-3">
         {topics.map(topic => (
-          <TopicCard key={topic.id} topic={topic} />
+          <TopicCard key={topic.id} topic={topic} mastery={masteryMap[topic.id]} />
         ))}
       </section>
 
       </div>{/* end home-bg-wrap */}
 
+      {user && <OnboardingModal userName={user.name} />}
     </div>
   );
 }

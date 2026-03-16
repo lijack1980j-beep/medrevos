@@ -9,6 +9,7 @@ import {
   projectExamReadiness,
 } from '@/lib/analytics';
 import { AccuracyChart } from '@/components/AccuracyChart';
+import { HourBar } from '@/components/HourBar';
 
 export default async function AnalyticsPage() {
   const user = await getCurrentUser();
@@ -142,7 +143,7 @@ export default async function AnalyticsPage() {
   // ── Knowledge decay: topics not studied in ≥7 days and mastery < 80 ────────
   const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
   const decayTopics  = topicProgress
-    .filter(p => p.lastStudiedAt < sevenDaysAgo && p.masteryPercent < 80)
+    .filter(p => p.lastStudiedAt != null && p.lastStudiedAt < sevenDaysAgo && p.masteryPercent < 80)
     .sort((a, b) => a.masteryPercent - b.masteryPercent)
     .slice(0, 5);
 
@@ -168,6 +169,39 @@ export default async function AnalyticsPage() {
   // ── Exam projection ────────────────────────────────────────────────────────
   const examDate   = fullUser?.examDate ?? null;
   const projection = examDate ? projectExamReadiness(readiness.total, chartData, examDate) : null;
+
+  // ── Weekly report (this week vs last week) ─────────────────────────────────
+  const thisWeekStart = new Date(today); thisWeekStart.setDate(today.getDate() - 6);
+  const lastWeekStart = new Date(today); lastWeekStart.setDate(today.getDate() - 13);
+  const lastWeekEnd   = new Date(today); lastWeekEnd.setDate(today.getDate() - 7);
+
+  const thisWeekAttempts = attempts.filter(a => a.createdAt >= thisWeekStart);
+  const lastWeekAttempts = attempts.filter(a => a.createdAt >= lastWeekStart && a.createdAt <= lastWeekEnd);
+  const thisWeekCards    = reviews.filter(r => r.reviewedAt >= thisWeekStart);
+  const lastWeekCards    = reviews.filter(r => r.reviewedAt >= lastWeekStart && r.reviewedAt <= lastWeekEnd);
+
+  const weekReport = {
+    questions:  { now: thisWeekAttempts.length,  prev: lastWeekAttempts.length },
+    accuracy:   { now: percent(thisWeekAttempts.filter(a => a.isCorrect).length, thisWeekAttempts.length), prev: percent(lastWeekAttempts.filter(a => a.isCorrect).length, lastWeekAttempts.length) },
+    cards:      { now: thisWeekCards.length,      prev: lastWeekCards.length },
+    studyDays:  { now: new Set(thisWeekAttempts.map(a => a.createdAt.toISOString().slice(0,10))).size, prev: new Set(lastWeekAttempts.map(a => a.createdAt.toISOString().slice(0,10))).size },
+  };
+
+  // ── Best study time (questions by hour of day) ─────────────────────────────
+  const hourBuckets: number[] = Array(24).fill(0);
+  const hourCorrect: number[] = Array(24).fill(0);
+  for (const a of attempts) {
+    const h = a.createdAt.getHours();
+    hourBuckets[h]++;
+    if (a.isCorrect) hourCorrect[h]++;
+  }
+  const maxHourCount = Math.max(...hourBuckets, 1);
+  const hourStats = hourBuckets.map((count, h) => ({
+    h, count,
+    accuracy: count > 0 ? percent(hourCorrect[h], count) : 0,
+    label: `${h.toString().padStart(2,'0')}:00`,
+    period: h < 12 ? 'AM' : 'PM',
+  }));
 
   // ── Insights ───────────────────────────────────────────────────────────────
   const insights: { type: 'positive' | 'warning' | 'neutral'; text: string }[] = [];
@@ -382,7 +416,7 @@ export default async function AnalyticsPage() {
             <p className="muted analytics-sub">Topics not studied in 7+ days with mastery below 80%</p>
             <div className="an-decay-list">
               {decayTopics.map(p => {
-                const daysSince = Math.floor((today.getTime() - p.lastStudiedAt.getTime()) / 86_400_000);
+                const daysSince = Math.floor((today.getTime() - p.lastStudiedAt!.getTime()) / 86_400_000);
                 const urgency   = daysSince >= 14 ? 'an-decay-row--urgent' : daysSince >= 7 ? 'an-decay-row--warn' : '';
                 return (
                   <Link key={p.id} href={`/study?topic=${p.topic.slug}`} className={`an-decay-row ${urgency}`}>
@@ -474,6 +508,67 @@ export default async function AnalyticsPage() {
                   <span className="analytics-rec-pct">{r.mastery}%</span>
                 </Link>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Weekly report ── */}
+        <div className="panel analytics-panel--wide">
+          <div className="analytics-panel-head">
+            <div>
+              <div className="kicker">Week over week</div>
+              <h3>Weekly report</h3>
+            </div>
+          </div>
+          <div className="an-week-grid">
+            {([
+              { label: 'Questions', now: weekReport.questions.now, prev: weekReport.questions.prev, unit: 'Qs' },
+              { label: 'Accuracy',  now: weekReport.accuracy.now,  prev: weekReport.accuracy.prev,  unit: '%'  },
+              { label: 'Cards reviewed', now: weekReport.cards.now, prev: weekReport.cards.prev, unit: '' },
+              { label: 'Study days', now: weekReport.studyDays.now, prev: weekReport.studyDays.prev, unit: '/7' },
+            ] as const).map(stat => {
+              const delta = stat.now - stat.prev;
+              const up = delta > 0;
+              const neutral = delta === 0;
+              return (
+                <div key={stat.label} className="an-week-stat">
+                  <div className="an-week-stat-label">{stat.label}</div>
+                  <div className="an-week-stat-now">{stat.now}{stat.unit}</div>
+                  <div className={`an-week-delta${up ? ' an-week-delta--up' : neutral ? ' an-week-delta--neutral' : ' an-week-delta--down'}`}>
+                    {neutral ? '—' : up ? `+${delta}` : delta} vs last week
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Study time heatmap ── */}
+        {totalAttempts > 0 && (
+          <div className="panel analytics-panel--wide">
+            <div className="analytics-panel-head">
+              <div>
+                <div className="kicker">When you study best</div>
+                <h3>Activity by hour</h3>
+              </div>
+            </div>
+            <div className="an-hour-grid">
+              {hourStats.map(h => (
+                <div key={h.h} className="an-hour-col" title={`${h.label} — ${h.count} Qs, ${h.accuracy}% accuracy`}>
+                  <div className="an-hour-bar-wrap">
+                    <HourBar
+                      pct={Math.round((h.count / maxHourCount) * 100)}
+                      className={`an-hour-bar${h.accuracy >= 75 ? ' an-hour-bar--good' : h.accuracy >= 50 ? ' an-hour-bar--ok' : h.count > 0 ? ' an-hour-bar--low' : ''}`}
+                    />
+                  </div>
+                  {h.h % 6 === 0 && <div className="an-hour-label">{h.h === 0 ? 'midnight' : h.h === 12 ? 'noon' : `${h.h > 12 ? h.h - 12 : h.h}${h.period}`}</div>}
+                </div>
+              ))}
+            </div>
+            <div className="an-hour-legend">
+              <span className="an-hour-dot an-hour-dot--good" />Good accuracy
+              <span className="an-hour-dot an-hour-dot--ok" />Average
+              <span className="an-hour-dot an-hour-dot--low" />Below 50%
             </div>
           </div>
         )}

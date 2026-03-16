@@ -29,7 +29,7 @@ async function main() {
         lessons: { create: topic.lesson },
         flashcards: { create: topic.flashcards },
         cases: { create: topic.cases },
-        questions: { create: topic.questions.map((question) => ({ stem: question.stem, explanation: question.explanation, difficulty: question.difficulty, options: { create: question.options.map(([label, text, isCorrect]: [string, string, boolean]) => ({ label, text, isCorrect })) } })) }
+        questions: { create: topic.questions.map((question) => ({ stem: question.stem, explanation: question.explanation, difficulty: question.difficulty, options: { create: question.options.map((opt: (string | boolean)[]) => ({ label: opt[0] as string, text: opt[1] as string, isCorrect: opt[2] as boolean })) } })) }
       }, include: { questions: { include: { options: true } } }
     });
     for (const question of createdTopic.questions) {

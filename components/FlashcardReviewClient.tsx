@@ -28,7 +28,7 @@ type Card = {
   dueDate: string;
 };
 
-export function FlashcardReviewClient({ initialCards }: { initialCards: Card[] }) {
+export function FlashcardReviewClient({ initialCards, freeMode = false }: { initialCards: Card[]; freeMode?: boolean }) {
   const [cards, setCards] = useState(initialCards);
   const [showBack, setShowBack] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -52,16 +52,18 @@ export function FlashcardReviewClient({ initialCards }: { initialCards: Card[] }
 
   async function review(rating: Rating) {
     if (!current || reviewing) return;
-    const cardId = current.id; // capture before async gap
+    const cardId = current.id;
     setReviewing(true);
-    try {
-      await fetch('/api/review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ flashcardId: cardId, rating }),
-      });
-    } catch {
-      // Network error — still advance the card so the session can continue
+    if (!freeMode) {
+      try {
+        await fetch('/api/review', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ flashcardId: cardId, rating }),
+        });
+      } catch {
+        // Network error — still advance
+      }
     }
     setShowBack(false);
     setIsFlipping(false);

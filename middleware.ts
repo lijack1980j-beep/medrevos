@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedPrefixes = ['/dashboard', '/study', '/questions', '/flashcards', '/cases', '/admin', '/exam', '/analytics', '/quick'];
+const protectedPrefixes = ['/dashboard', '/study', '/questions', '/flashcards', '/cases', '/admin', '/exam', '/analytics', '/quick', '/settings'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -18,5 +18,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/study/:path*', '/questions/:path*', '/flashcards/:path*', '/cases/:path*', '/admin/:path*', '/exam/:path*', '/analytics/:path*', '/quick/:path*']
+  matcher: ['/dashboard/:path*', '/study/:path*', '/questions/:path*', '/flashcards/:path*', '/cases/:path*', '/admin/:path*', '/exam/:path*', '/analytics/:path*', '/quick/:path*', '/settings/:path*']
 };

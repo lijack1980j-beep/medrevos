@@ -62,6 +62,32 @@ export function QuickFlashcardsClient() {
   const [spacedFlipped, setSpacedFlipped] = useState(false);
   const [spacedFlipping, setSpacedFlipping] = useState(false);
 
+  // ── Export ──
+  const [topics, setTopics]         = useState<{ slug: string; title: string }[]>([]);
+  const [exportSlug, setExportSlug] = useState('');
+  const [exporting, setExporting]   = useState(false);
+  const [exported, setExported]     = useState(false);
+
+  // Load topics for export
+  useEffect(() => {
+    fetch('/api/topics').then(r => r.json()).then((data: { slug: string; title: string }[]) => {
+      setTopics(data);
+      if (data.length > 0) setExportSlug(data[0].slug);
+    }).catch(() => {});
+  }, []);
+
+  async function exportToDeck() {
+    if (!exportSlug || exporting) return;
+    setExporting(true);
+    await fetch('/api/quick/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topicSlug: exportSlug, cards }),
+    });
+    setExporting(false);
+    setExported(true);
+  }
+
   // Auto-advance spaced mode when queue empties
   useEffect(() => {
     if (phase === 'review' && mode === 'spaced' && spacedQueue.length === 0 && spacedDone > 0) {
@@ -253,6 +279,20 @@ export function QuickFlashcardsClient() {
           {(mode === 'flip' || mode === 'recall') && known.size < cards.length && (
             <p className="muted qfc-done-hint">{cards.length - known.size} card{cards.length - known.size !== 1 ? 's' : ''} still to master — try again.</p>
           )}
+          {topics.length > 0 && !exported && (
+            <div className="qfc-export">
+              <div className="qfc-export-label">Save cards to your main deck</div>
+              <div className="qfc-export-row">
+                <select className="qfc-export-select" value={exportSlug} onChange={e => setExportSlug(e.target.value)} title="Select topic to save cards to" aria-label="Select topic">
+                  {topics.map(t => <option key={t.slug} value={t.slug}>{t.title}</option>)}
+                </select>
+                <button type="button" className="btn primary qfc-export-btn" onClick={exportToDeck} disabled={exporting}>
+                  {exporting ? 'Saving…' : `Save ${cards.length} cards`}
+                </button>
+              </div>
+            </div>
+          )}
+          {exported && <p className="qfc-export-saved">Cards saved to your deck!</p>}
         </div>
       </div>
     );
