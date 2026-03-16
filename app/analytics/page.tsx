@@ -10,6 +10,7 @@ import {
 } from '@/lib/analytics';
 import { AccuracyChart } from '@/components/AccuracyChart';
 import { HourBar } from '@/components/HourBar';
+import { RadarChart } from '@/components/RadarChart';
 
 export default async function AnalyticsPage() {
   const user = await getCurrentUser();
@@ -376,6 +377,17 @@ export default async function AnalyticsPage() {
             </div>
           )}
         </div>
+
+        {/* ── System radar chart ── */}
+        {systemStats.length >= 3 && (
+          <div className="panel analytics-panel">
+            <h3>System coverage radar</h3>
+            <p className="muted analytics-sub">Accuracy per system at a glance</p>
+            <div className="an-radar-wrap">
+              <RadarChart axes={systemStats.map(s => ({ label: s.sys, value: s.accuracy }))} />
+            </div>
+          </div>
+        )}
 
         {/* ── Flashcard health ── */}
         <div className="panel analytics-panel">

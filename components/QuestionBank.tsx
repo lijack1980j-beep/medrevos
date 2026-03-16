@@ -17,11 +17,14 @@ const TIMER_SECS = 90;
 export function QuestionBank({
   initialQuestions,
   bookmarkedIds: initialBookmarks = [],
+  wrongIds: initialWrongIds = [],
 }: {
   initialQuestions: Question[];
   bookmarkedIds?: string[];
+  wrongIds?: string[];
 }) {
   const [bookmarks, setBookmarks] = useState<Set<string>>(new Set(initialBookmarks));
+  const wrongSet = useMemo(() => new Set(initialWrongIds), [initialWrongIds]);
 
   const systems = useMemo(() => [...new Set(initialQuestions.map(q => q.topic.system))].sort(), [initialQuestions]);
   const topics  = useMemo(() => [...new Set(initialQuestions.map(q => q.topic.title))].sort(), [initialQuestions]);
@@ -29,6 +32,7 @@ export function QuestionBank({
   const [systemFilter, setSystemFilter] = useState('All');
   const [topicFilter,  setTopicFilter]  = useState('All');
   const [showBookmarked, setShowBookmarked] = useState(false);
+  const [showWrong, setShowWrong] = useState(false);
   const [timedMode, setTimedMode] = useState(false);
   const [index,     setIndex]     = useState(0);
   const [selected,  setSelected]  = useState<string | null>(null);
@@ -44,10 +48,11 @@ export function QuestionBank({
   const filtered = useMemo(() => {
     let list = initialQuestions;
     if (showBookmarked)          list = list.filter(q => bookmarks.has(q.id));
+    if (showWrong)               list = list.filter(q => wrongSet.has(q.id));
     if (systemFilter !== 'All')  list = list.filter(q => q.topic.system === systemFilter);
     if (topicFilter  !== 'All')  list = list.filter(q => q.topic.title  === topicFilter);
     return list;
-  }, [systemFilter, topicFilter, showBookmarked, initialQuestions, bookmarks]);
+  }, [systemFilter, topicFilter, showBookmarked, showWrong, initialQuestions, bookmarks, wrongSet]);
 
   const question = useMemo(() => filtered[index], [index, filtered]);
 
@@ -106,13 +111,16 @@ export function QuestionBank({
   });
 
   function changeSystem(sys: string) {
-    setSystemFilter(sys); setTopicFilter('All'); setShowBookmarked(false); setIndex(0); resetCard();
+    setSystemFilter(sys); setTopicFilter('All'); setShowBookmarked(false); setShowWrong(false); setIndex(0); resetCard();
   }
   function changeTopic(t: string) {
     setTopicFilter(t); setIndex(0); resetCard();
   }
   function toggleBookmarked() {
-    setShowBookmarked(v => !v); setSystemFilter('All'); setTopicFilter('All'); setIndex(0); resetCard();
+    setShowBookmarked(v => !v); setShowWrong(false); setSystemFilter('All'); setTopicFilter('All'); setIndex(0); resetCard();
+  }
+  function toggleWrong() {
+    setShowWrong(v => !v); setShowBookmarked(false); setSystemFilter('All'); setTopicFilter('All'); setIndex(0); resetCard();
   }
 
   async function toggleBookmark(qId: string) {
@@ -195,6 +203,11 @@ export function QuestionBank({
           <button type="button" className={`qb-filter-pill${showBookmarked ? ' qb-filter-pill--active' : ''}`} onClick={toggleBookmarked}>
             🔖 Bookmarked ({bookmarks.size})
           </button>
+          {wrongSet.size > 0 && (
+            <button type="button" className={`qb-filter-pill qb-filter-pill--wrong${showWrong ? ' qb-filter-pill--active' : ''}`} onClick={toggleWrong}>
+              ✗ Wrong ({wrongSet.size})
+            </button>
+          )}
           {['All', ...systems].map(sys => (
             <button key={sys} type="button"
               className={`qb-filter-pill${!showBookmarked && systemFilter === sys ? ' qb-filter-pill--active' : ''}`}

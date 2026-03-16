@@ -729,6 +729,18 @@ textarea:focus, input:focus, select:focus {
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
 }
 
+.fc-stats-row {
+  display: flex; gap: 12px; justify-content: center;
+}
+.fc-stat {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 14px; border-radius: 10px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  min-width: 68px;
+}
+.fc-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); }
+.fc-stat-value { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.75); }
+
 .fc-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.08) 70%, transparent 100%);
@@ -1149,6 +1161,9 @@ textarea:focus, input:focus, select:focus {
   background: rgba(99,102,241,0.2); border-color: rgba(99,102,241,0.5);
   color: #fff; box-shadow: 0 0 12px rgba(99,102,241,0.25);
 }
+.qb-filter-pill--wrong { border-color: rgba(239,68,68,0.3); color: rgba(252,165,165,0.85); }
+.qb-filter-pill--wrong:hover { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.45); }
+.qb-filter-pill--wrong.qb-filter-pill--active { background: rgba(239,68,68,0.2); border-color: rgba(239,68,68,0.5); color: #fff; box-shadow: 0 0 12px rgba(239,68,68,0.25); }
 .qb-filter-count { font-size: 12px; color: rgba(255,255,255,0.35); white-space: nowrap; }
 .qb-card { display: flex; flex-direction: column; gap: 18px; }
 .qb-card-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -2006,6 +2021,9 @@ textarea:focus, input:focus, select:focus {
 [data-theme="light"] .fc-content { color: rgba(13,15,26,0.88); }
 [data-theme="light"] .fc-content--answer { text-shadow: none; }
 [data-theme="light"] .fc-note { color: rgba(13,15,26,0.45); }
+[data-theme="light"] .fc-stat { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+[data-theme="light"] .fc-stat-label { color: rgba(13,15,26,0.38); }
+[data-theme="light"] .fc-stat-value { color: rgba(13,15,26,0.7); }
 [data-theme="light"] .fc-divider { background: rgba(0,0,0,0.08); }
 [data-theme="light"] .fc-card-count { color: rgba(13,15,26,0.3); }
 [data-theme="light"] .fc-progress-count span { color: rgba(13,15,26,0.3); }
@@ -2422,6 +2440,55 @@ textarea:focus, input:focus, select:focus {
 .dg-label { font-size: 12px; color: rgba(255,255,255,0.4); }
 
 /* ─────────────────────────────────────────────────────────────────
+   STUDY PLANNER
+───────────────────────────────────────────────────────────────── */
+.sp-panel { display: flex; flex-direction: column; gap: 16px; }
+.sp-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.sp-title { font-size: 16px; font-weight: 700; margin: 2px 0 0; }
+.sp-exam-badge {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 14px; border-radius: 12px; border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04); min-width: 72px; text-align: center;
+}
+.sp-exam-badge--high   { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.08); }
+.sp-exam-badge--medium { border-color: rgba(251,146,60,0.4); background: rgba(251,146,60,0.08); }
+.sp-exam-badge--normal { border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.06); }
+.sp-exam-days  { font-size: 24px; font-weight: 800; line-height: 1; color: #fff; }
+.sp-exam-badge--high   .sp-exam-days { color: #f87171; }
+.sp-exam-badge--medium .sp-exam-days { color: #fb923c; }
+.sp-exam-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.sp-items { display: flex; flex-direction: column; gap: 8px; }
+.sp-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-radius: 12px;
+  background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  text-decoration: none; color: inherit; transition: background 0.15s;
+}
+.sp-item:hover { background: rgba(255,255,255,0.07); }
+.sp-item--done { background: rgba(52,211,153,0.07); border-color: rgba(52,211,153,0.25); }
+.sp-item-icon  { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.sp-item--done .sp-item-icon { color: #34d399; font-style: normal; }
+.sp-item-body  { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.sp-item-top   { display: flex; justify-content: space-between; align-items: baseline; }
+.sp-item-label { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
+.sp-item-count { font-size: 12px; color: rgba(255,255,255,0.4); }
+.sp-item--done .sp-item-label { color: #34d399; }
+.sp-bar-track  { height: 4px; border-radius: 99px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.sp-bar-fill   { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.4s ease; }
+.sp-item--done .sp-bar-fill { background: #34d399; }
+
+[data-theme="light"] .sp-exam-badge { background: #f9fafb; border-color: #e5e7eb; }
+[data-theme="light"] .sp-exam-badge--high   { background: #fef2f2; border-color: rgba(239,68,68,0.3); }
+[data-theme="light"] .sp-exam-badge--medium { background: #fff7ed; border-color: rgba(251,146,60,0.3); }
+[data-theme="light"] .sp-exam-label { color: #9ca3af; }
+[data-theme="light"] .sp-item { background: #f9fafb; border-color: #e5e7eb; }
+[data-theme="light"] .sp-item:hover { background: #f3f4f6; }
+[data-theme="light"] .sp-item--done { background: rgba(52,211,153,0.06); border-color: rgba(52,211,153,0.3); }
+[data-theme="light"] .sp-item-label { color: rgba(13,15,26,0.8); }
+[data-theme="light"] .sp-item-count { color: rgba(13,15,26,0.4); }
+[data-theme="light"] .sp-bar-track  { background: #e5e7eb; }
+
+/* ─────────────────────────────────────────────────────────────────
    FLASHCARD MODE TOGGLE
 ───────────────────────────────────────────────────────────────── */
 .fc-mode-toggle { display: flex; gap: 6px; padding: 4px; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--border); width: fit-content; margin-bottom: 20px; }
@@ -2499,6 +2566,26 @@ textarea:focus, input:focus, select:focus {
 .an-hour-dot--good { background: #34d399; }
 .an-hour-dot--ok   { background: var(--accent); }
 .an-hour-dot--low  { background: #f87171; }
+
+/* ─────────────────────────────────────────────────────────────────
+   RADAR CHART
+───────────────────────────────────────────────────────────────── */
+.an-radar-wrap { display: flex; justify-content: center; }
+.radar-svg { overflow: visible; }
+.radar-grid { stroke: rgba(255,255,255,0.1); stroke-width: 1; }
+.radar-axis { stroke: rgba(255,255,255,0.1); stroke-width: 1; }
+.radar-data-fill { fill: rgba(99,102,241,0.18); }
+.radar-data-stroke { stroke: rgba(99,102,241,0.7); stroke-width: 2; }
+.radar-dot { fill: rgba(99,102,241,0.9); }
+.radar-label { fill: rgba(255,255,255,0.55); font-size: 11px; }
+[data-theme="light"] .radar-grid { stroke: rgba(0,0,0,0.1); }
+[data-theme="light"] .radar-axis { stroke: rgba(0,0,0,0.1); }
+[data-theme="light"] .radar-label { fill: rgba(13,15,26,0.5); }
+
+/* ─────────────────────────────────────────────────────────────────
+   CONFETTI
+───────────────────────────────────────────────────────────────── */
+.confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
 
 /* ─────────────────────────────────────────────────────────────────
    ONBOARDING MODAL

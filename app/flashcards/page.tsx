@@ -119,7 +119,16 @@ export default async function FlashcardsPage({
         ) : (
           <FlashcardReviewClient
             key={`${selectedSlug ?? 'all'}-${freeMode ? 'free' : 'srs'}`}
-            initialCards={dueCards.map(c => ({ ...c, dueDate: new Date().toISOString() }))}
+            initialCards={dueCards.map(c => {
+              const s = stateMap.get(c.id);
+              return {
+                ...c,
+                dueDate: (s?.dueDate ?? new Date()).toISOString(),
+                intervalDays: s?.intervalDays ?? 0,
+                easeFactor: s?.easeFactor ?? 2.5,
+                repetitions: s?.repetitions ?? 0,
+              };
+            })}
             freeMode={freeMode}
           />
         )}

@@ -6,7 +6,14 @@ import { PomodoroTimer } from '@/components/PomodoroTimer';
 
 export const metadata: Metadata = {
   title: 'Med Revision OS V2',
-  description: 'A medical revision platform with auth, analytics, admin CRUD, Qbank, spaced repetition, and cases.'
+  description: 'A medical revision platform with auth, analytics, admin CRUD, Qbank, spaced repetition, and cases.',
+  manifest: '/manifest.json',
+  themeColor: '#6366f1',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'MedRevision',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

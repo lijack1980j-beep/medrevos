@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { StreakConfetti } from '@/components/StreakConfetti';
+import { FcProgressFill } from '@/components/FcProgressFill';
 
 const ratings = ['AGAIN', 'HARD', 'GOOD', 'EASY'] as const;
 type Rating = (typeof ratings)[number];
@@ -26,6 +28,9 @@ type Card = {
   note: string | null;
   topic: { title: string };
   dueDate: string;
+  intervalDays?: number;
+  easeFactor?: number;
+  repetitions?: number;
 };
 
 export function FlashcardReviewClient({ initialCards, freeMode = false }: { initialCards: Card[]; freeMode?: boolean }) {
@@ -81,16 +86,20 @@ export function FlashcardReviewClient({ initialCards, freeMode = false }: { init
 
   /* ── Completion screen ── */
   if (!current) {
+    const milestone = [7, 14, 30].some(m => total.current >= m);
     return (
-      <div className="fc-complete">
-        <div className="fc-complete-orb" />
-        <div className="fc-complete-emoji">🎉</div>
-        <h3 className="fc-complete-title">All caught up!</h3>
-        <p className="fc-complete-text">
-          You cleared all {total.current} due card{total.current !== 1 ? 's' : ''}.
-          Seed more or check back when new reviews are due.
-        </p>
-      </div>
+      <>
+        <StreakConfetti trigger={milestone} />
+        <div className="fc-complete">
+          <div className="fc-complete-orb" />
+          <div className="fc-complete-emoji">🎉</div>
+          <h3 className="fc-complete-title">All caught up!</h3>
+          <p className="fc-complete-text">
+            You cleared all {total.current} due card{total.current !== 1 ? 's' : ''}.
+            Seed more or check back when new reviews are due.
+          </p>
+        </div>
+      </>
     );
   }
 
@@ -106,10 +115,7 @@ export function FlashcardReviewClient({ initialCards, freeMode = false }: { init
       {/* Progress bar */}
       <div className="fc-progress-row">
         <div className="fc-progress-track">
-          <div
-            className="fc-progress-fill"
-            style={{ '--progress': `${progress}%` } as React.CSSProperties}
-          />
+          <FcProgressFill pct={progress} />
         </div>
         <span className="fc-progress-count">
           {done} <span>/</span> {total.current}
@@ -139,6 +145,24 @@ export function FlashcardReviewClient({ initialCards, freeMode = false }: { init
         {showBack && current.note ? (
           <div className="fc-note">{current.note}</div>
         ) : null}
+
+        {/* SRS stats */}
+        {showBack && (current.intervalDays !== undefined || current.repetitions !== undefined) && (
+          <div className="fc-stats-row">
+            <span className="fc-stat" title="Current interval">
+              <span className="fc-stat-label">Interval</span>
+              <span className="fc-stat-value">{current.intervalDays ?? 0}d</span>
+            </span>
+            <span className="fc-stat" title="Ease factor">
+              <span className="fc-stat-label">Ease</span>
+              <span className="fc-stat-value">{((current.easeFactor ?? 2.5) * 100).toFixed(0)}%</span>
+            </span>
+            <span className="fc-stat" title="Number of reviews">
+              <span className="fc-stat-label">Reviews</span>
+              <span className="fc-stat-value">{current.repetitions ?? 0}</span>
+            </span>
+          </div>
+        )}
 
         <div className="fc-divider" />
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ExamProgressFill } from '@/components/ExamProgressFill';
 
 type Option   = { id: string; label: string; text: string };
 type Question = { answerId: string; questionId: string; stem: string; options: Option[]; topic: { title: string; system: string } };
@@ -57,6 +58,29 @@ export function ExamSession({ sessionId, questions, timeLimitSec, startedAt }: {
     setFlagged(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
   }
 
+  // Keyboard shortcuts: 1–4 select option, F flag, ←/→ navigate
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const q2 = questions[current];
+      if (!q2) return;
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= q2.options.length) {
+        select(q2.questionId, q2.options[num - 1].id);
+      } else if (e.key === 'f' || e.key === 'F') {
+        toggleFlag(current);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        setCurrent(i => Math.min(questions.length - 1, i + 1));
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        setCurrent(i => Math.max(0, i - 1));
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, questions]);
+
   const q        = questions[current];
   const answered = Object.keys(answers).length;
   const pct      = Math.round((answered / questions.length) * 100);
@@ -77,7 +101,7 @@ export function ExamSession({ sessionId, questions, timeLimitSec, startedAt }: {
         <span className="exam-topbar-title">Timed Exam</span>
         <div className="exam-topbar-center">
           <div className="exam-progress-track">
-            <div className="exam-progress-fill" style={{ width: `${pct}%` }} />
+            <ExamProgressFill pct={pct} />
           </div>
           <span className="exam-topbar-count">{answered}/{questions.length} answered</span>
         </div>

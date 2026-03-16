@@ -5,6 +5,7 @@ import { StatCard } from '@/components/StatCard';
 import { ExamCountdown } from '@/components/ExamCountdown';
 import { DailyGoalWidget } from '@/components/DailyGoalWidget';
 import { MasteryBar } from '@/components/MasteryBar';
+import { SpBar } from '@/components/SpBar';
 import { calculateStreak, percent, readinessScore } from '@/lib/analytics';
 
 export default async function DashboardPage() {
@@ -64,6 +65,28 @@ export default async function DashboardPage() {
     },
   ];
 
+  // ── Study planner ─────────────────────────────────────────────────────────
+  const examDate    = user.examDate ?? null;
+  const daysToExam  = examDate
+    ? Math.max(0, Math.ceil((new Date(examDate).getTime() - new Date().setHours(0,0,0,0)) / 86_400_000))
+    : null;
+
+  // Urgency-weighted targets: more Qs/cards as exam approaches
+  const urgency = daysToExam == null ? 'normal' : daysToExam <= 30 ? 'high' : daysToExam <= 90 ? 'medium' : 'normal';
+  const qTarget    = urgency === 'high' ? 30 : urgency === 'medium' ? 20 : 10;
+  const cardTarget = urgency === 'high' ? 50 : urgency === 'medium' ? 30 : 20;
+  const todayCards = reviews.filter(r => r.reviewedAt.toISOString().slice(0, 10) === todayStr).length;
+  const qDone      = todayAttempts;
+  const cardsDone  = todayCards;
+
+  const planItems: { label: string; done: number; target: number; href: string; icon: string }[] = [
+    { label: 'Flashcards', done: cardsDone, target: Math.max(cardTarget, Math.min(dueCards, cardTarget * 2)), href: '/flashcards', icon: '⚡' },
+    { label: 'MCQ questions', done: qDone, target: qTarget, href: '/questions', icon: '📝' },
+    ...(weakestTopic
+      ? [{ label: `Study: ${weakestTopic.topic.title}`, done: weakestTopic.masteryPercent >= 70 ? 1 : 0, target: 1, href: `/study?topic=${weakestTopic.topic.slug}`, icon: '🎯' }]
+      : []),
+  ];
+
   return (
     <div className="dash-page">
 
@@ -93,6 +116,42 @@ export default async function DashboardPage() {
       </section>
 
       <DailyGoalWidget todayAttempts={todayAttempts} />
+
+      {/* ── Study planner ── */}
+      <div className="panel sp-panel">
+        <div className="sp-header">
+          <div>
+            <div className="kicker">Today&rsquo;s plan</div>
+            <h3 className="sp-title">Study planner</h3>
+          </div>
+          {daysToExam != null && (
+            <div className={`sp-exam-badge sp-exam-badge--${urgency}`}>
+              <span className="sp-exam-days">{daysToExam}</span>
+              <span className="sp-exam-label">days to exam</span>
+            </div>
+          )}
+        </div>
+        <div className="sp-items">
+          {planItems.map(item => {
+            const pct    = Math.min(100, item.target > 0 ? Math.round((item.done / item.target) * 100) : 0);
+            const complete = item.done >= item.target;
+            return (
+              <Link key={item.label} href={item.href as any} className={`sp-item${complete ? ' sp-item--done' : ''}`}>
+                <span className="sp-item-icon">{complete ? '✓' : item.icon}</span>
+                <div className="sp-item-body">
+                  <div className="sp-item-top">
+                    <span className="sp-item-label">{item.label}</span>
+                    <span className="sp-item-count">{item.done} / {item.target}</span>
+                  </div>
+                  <div className="sp-bar-track">
+                    <SpBar pct={pct} />
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
 
       <section className="grid cols-2">
 

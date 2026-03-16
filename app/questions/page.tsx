@@ -6,7 +6,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
   const user = await getCurrentUser();
   const topicSlug = searchParams?.topic;
 
-  const [questions, bookmarks] = await Promise.all([
+  const [questions, bookmarks, wrongAttempts] = await Promise.all([
     prisma.question.findMany({
       where: topicSlug ? { topic: { slug: topicSlug } } : undefined,
       include: { options: true, topic: true },
@@ -15,7 +15,17 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
     user
       ? prisma.bookmark.findMany({ where: { userId: user.id }, select: { questionId: true } })
       : Promise.resolve([]),
+    user
+      ? prisma.questionAttempt.findMany({
+          where: { userId: user.id, isCorrect: false },
+          select: { questionId: true },
+          distinct: ['questionId'],
+        })
+      : Promise.resolve([]),
   ]);
+
+  // IDs answered incorrectly at least once (and not yet answered correctly after)
+  const wrongIds = wrongAttempts.map(a => a.questionId);
 
   return (
     <div className="qb-page">
@@ -27,6 +37,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
       <QuestionBank
         initialQuestions={questions}
         bookmarkedIds={bookmarks.map(b => b.questionId)}
+        wrongIds={wrongIds}
       />
     </div>
   );
