@@ -8,7 +8,7 @@ export async function createSession(userId: string) {
   const token = randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 14);
   await prisma.session.create({ data: { token, userId, expiresAt } });
-  cookies().set(SESSION_COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: false, path: '/', expires: expiresAt });
+  cookies().set(SESSION_COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', expires: expiresAt });
 }
 
 export async function destroySession() {
