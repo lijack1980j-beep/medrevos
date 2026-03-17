@@ -13,7 +13,6 @@ import {
 import { AccuracyChart } from '@/components/AccuracyChart';
 import { HourBar } from '@/components/HourBar';
 import { RadarChart } from '@/components/RadarChart';
-import { TopicCertificate } from '@/components/TopicCertificate';
 import { PrintButton } from '@/components/PrintButton';
 
 export default async function AnalyticsPage() {
