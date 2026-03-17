@@ -1,5 +1,5 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { MainNav } from '@/components/MainNav';
 import { ShortcutModal } from '@/components/ShortcutModal';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
@@ -8,12 +8,15 @@ export const metadata: Metadata = {
   title: 'Med Revision OS V2',
   description: 'A medical revision platform with auth, analytics, admin CRUD, Qbank, spaced repetition, and cases.',
   manifest: '/manifest.json',
-  themeColor: '#6366f1',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'MedRevision',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#6366f1',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

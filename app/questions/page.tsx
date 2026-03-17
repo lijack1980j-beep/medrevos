@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { prisma } from '@/lib/db';
 import { QuestionBank } from '@/components/QuestionBank';
 import { getCurrentUser } from '@/lib/auth';

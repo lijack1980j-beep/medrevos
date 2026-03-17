@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { ExamConfig } from '@/components/ExamConfig';
