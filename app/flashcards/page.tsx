@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { FlashcardReviewClient } from '@/components/FlashcardReviewClient';
+import { CustomFlashcardForm } from '@/components/CustomFlashcardForm';
 import { requireUser } from '@/lib/auth';
 
 export default async function FlashcardsPage({
@@ -15,12 +16,13 @@ export default async function FlashcardsPage({
   const freeMode = searchParams.mode === 'free';
 
   // All flashcards with their topic info
-  const [allCards, states] = await Promise.all([
+  const [allCards, states, allTopics] = await Promise.all([
     prisma.flashcard.findMany({
       include: { topic: { select: { title: true, slug: true, system: true } } },
       orderBy: { createdAt: 'asc' },
     }),
     prisma.userFlashcardState.findMany({ where: { userId: user.id } }),
+    prisma.topic.findMany({ select: { id: true, title: true, system: true }, orderBy: { title: 'asc' } }),
   ]);
 
   const stateMap = new Map(states.map(s => [s.flashcardId, s]));
@@ -134,6 +136,17 @@ export default async function FlashcardsPage({
             freeMode={freeMode}
           />
         )}
+        <div className="fc-custom-section">
+          <div className="fc-custom-header">
+            <span className="kicker">Your cards</span>
+            <h3>Custom flashcards</h3>
+            <p className="muted">Create your own cards — they appear in your SRS queue like any other card.</p>
+          </div>
+          <CustomFlashcardForm
+            topics={allTopics}
+            onCreated={() => {}}
+          />
+        </div>
       </main>
 
     </div>

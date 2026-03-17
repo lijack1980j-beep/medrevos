@@ -8,7 +8,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
   const user = await getCurrentUser();
   const topicSlug = searchParams?.topic;
 
-  const [questions, bookmarks, wrongAttempts] = await Promise.all([
+  const [questions, bookmarks, wrongAttempts, allAttempts, srsStates] = await Promise.all([
     prisma.question.findMany({
       where: topicSlug ? { topic: { slug: topicSlug } } : undefined,
       include: { options: true, topic: true },
@@ -24,10 +24,29 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
           distinct: ['questionId'],
         })
       : Promise.resolve([]),
+    user
+      ? prisma.questionAttempt.findMany({
+          where: { userId: user.id },
+          select: { questionId: true, isCorrect: true },
+        })
+      : Promise.resolve([]),
+    user
+      ? prisma.questionSRSState.findMany({
+          where: { userId: user.id },
+          select: { questionId: true, dueDate: true, intervalDays: true, easeFactor: true, repetitions: true },
+        })
+      : Promise.resolve([]),
   ]);
 
-  // IDs answered incorrectly at least once (and not yet answered correctly after)
-  const wrongIds = wrongAttempts.map(a => a.questionId);
+  const wrongIds     = wrongAttempts.map(a => a.questionId);
+  const attemptedIds = [...new Set(allAttempts.map(a => a.questionId))];
+
+  // Per-question accuracy map
+  const accuracyMap: Record<string, number> = {};
+  for (const qId of attemptedIds) {
+    const qAttempts = allAttempts.filter(a => a.questionId === qId);
+    accuracyMap[qId] = Math.round((qAttempts.filter(a => a.isCorrect).length / qAttempts.length) * 100);
+  }
 
   return (
     <div className="qb-page">
@@ -40,6 +59,9 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
         initialQuestions={questions}
         bookmarkedIds={bookmarks.map(b => b.questionId)}
         wrongIds={wrongIds}
+        attemptedIds={attemptedIds}
+        accuracyMap={accuracyMap}
+        srsStates={srsStates.map(s => ({ ...s, dueDate: s.dueDate.toISOString() }))}
       />
     </div>
   );

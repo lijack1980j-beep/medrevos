@@ -13,6 +13,8 @@ import {
 import { AccuracyChart } from '@/components/AccuracyChart';
 import { HourBar } from '@/components/HourBar';
 import { RadarChart } from '@/components/RadarChart';
+import { TopicCertificate } from '@/components/TopicCertificate';
+import { PrintButton } from '@/components/PrintButton';
 
 export default async function AnalyticsPage() {
   const user = await getCurrentUser();
@@ -255,6 +257,9 @@ export default async function AnalyticsPage() {
         <h1>Your analytics</h1>
         <p className="muted">A deep look at your readiness, study patterns, retention health, and where to focus next.</p>
       </div>
+      <div className="an-page-actions">
+        <PrintButton label="Export PDF" className="btn an-print-btn" />
+      </div>
 
       {/* ── Readiness hero ── */}
       <section className="an-readiness-hero panel">
@@ -372,6 +377,7 @@ export default async function AnalyticsPage() {
                       <div className="analytics-system-bar" style={{ '--w': `${s.accuracy}%`, '--hue': hue } as React.CSSProperties} />
                     </div>
                     <span className="analytics-system-pct">{s.accuracy}%</span>
+                    {s.accuracy >= 80 && <span className="an-cert-badge" title="Mastery achieved">🏆</span>}
                     <span className="analytics-system-count muted">{s.correct}/{s.total}</span>
                   </div>
                 );
@@ -497,6 +503,7 @@ export default async function AnalyticsPage() {
                 >
                   <span className="analytics-mastery-pct">{t.mastery}%</span>
                   <span className="analytics-mastery-name">{t.title}</span>
+                  {t.mastery >= 80 && <span className="an-cert-star" title="Mastery achieved">★</span>}
                 </Link>
               );
             })}

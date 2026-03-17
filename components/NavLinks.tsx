@@ -21,7 +21,8 @@ const examLinks = [
 
 const metaLinks = [
   ['/analytics', 'Analytics'],
-] as const satisfies readonly (readonly [Route, string])[];
+  ['/calendar', 'Calendar'],
+] as unknown as readonly (readonly [Route, string])[];
 
 export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
   const pathname = usePathname();

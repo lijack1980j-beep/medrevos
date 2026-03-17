@@ -38,6 +38,14 @@ export default async function ExamResultsPage({ params }: { params: { sessionId:
 
   const scoreColor = score >= 70 ? '#34d399' : score >= 50 ? '#fb923c' : '#f87171';
 
+  function getPercentile(s: number) {
+    if (s >= 90) return 99; if (s >= 85) return 95; if (s >= 80) return 88;
+    if (s >= 75) return 78; if (s >= 70) return 65; if (s >= 65) return 52;
+    if (s >= 60) return 40; if (s >= 55) return 28; if (s >= 50) return 18;
+    return Math.max(5, Math.round(s * 0.3));
+  }
+  const percentile = getPercentile(score);
+
   return (
     <div className="exam-results">
 
@@ -50,6 +58,8 @@ export default async function ExamResultsPage({ params }: { params: { sessionId:
             <span>{correct}/{total} correct</span>
             <span className="muted">·</span>
             <span className="muted">{mins}m {secs}s</span>
+            <span className="muted">·</span>
+            <span className="exam-percentile">Top {100 - percentile}% &mdash; {percentile}th percentile</span>
           </div>
         </div>
         <Link href="/exam" className="btn secondary">New exam</Link>

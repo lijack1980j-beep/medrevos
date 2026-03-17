@@ -48,6 +48,8 @@ model User {
   bookmarks      Bookmark[]
   notes          TopicNote[]
   examSessions   ExamSession[]
+  questionSRS    QuestionSRSState[]
+  customCards    Flashcard[]         @relation("CustomFlashcards")
 }
 
 model Session {
@@ -98,6 +100,7 @@ model Question {
   difficulty      Int
   type            QuestionType  @default(SINGLE_BEST)
   correctOptionId String?
+  imageUrl        String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   topic           Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
@@ -105,6 +108,7 @@ model Question {
   attempts        QuestionAttempt[]
   bookmarks       Bookmark[]
   examAnswers     ExamAnswer[]
+  srsStates       QuestionSRSState[]
 }
 
 model QuestionOption {
@@ -126,9 +130,12 @@ model Flashcard {
   easeFactor      Float         @default(2.5)
   repetitions     Int           @default(0)
   dueDate         DateTime      @default(now())
+  isCustom        Boolean       @default(false)
+  authorId        String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   topic           Topic         @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  author          User?         @relation("CustomFlashcards", fields: [authorId], references: [id], onDelete: SetNull)
   reviewHistory   FlashcardReview[]
   userStates      UserFlashcardState[]
 }
@@ -155,6 +162,21 @@ model QuestionAttempt {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+model QuestionSRSState {
+  id           String   @id @default(cuid())
+  userId       String
+  questionId   String
+  intervalDays Int      @default(1)
+  easeFactor   Float    @default(2.5)
+  repetitions  Int      @default(0)
+  dueDate      DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+}
 
 model UserFlashcardState {
   id           String   @id @default(cuid())
