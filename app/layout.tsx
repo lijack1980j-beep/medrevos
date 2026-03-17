@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { MainNav } from '@/components/MainNav';
 import { ShortcutModal } from '@/components/ShortcutModal';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
+import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: 'Med Revision OS V2',
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </div>
         <ShortcutModal />
         <PomodoroTimer />
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
