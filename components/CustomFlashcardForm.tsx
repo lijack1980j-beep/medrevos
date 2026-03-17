@@ -1,17 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Topic = { id: string; title: string; system: string };
 
-export function CustomFlashcardForm({ topics, onCreated }: { topics: Topic[]; onCreated: (card: { id: string; front: string; back: string; note: string | null; topic: { title: string; slug: string; system: string }; dueDate: string; intervalDays: number; easeFactor: number; repetitions: number }) => void }) {
-  const [open, setOpen]       = useState(false);
-  const [topicId, setTopicId] = useState(topics[0]?.id ?? '');
-  const [front, setFront]     = useState('');
-  const [back, setBack]       = useState('');
-  const [note, setNote]       = useState('');
-  const [saving, setSaving]   = useState(false);
-  const [error, setError]     = useState('');
+export function CustomFlashcardForm({ topics }: { topics: Topic[] }) {
+  const router                        = useRouter();
+  const [open, setOpen]               = useState(false);
+  const [topicId, setTopicId]         = useState(topics[0]?.id ?? '');
+  const [front, setFront]             = useState('');
+  const [back, setBack]               = useState('');
+  const [note, setNote]               = useState('');
+  const [saving, setSaving]           = useState(false);
+  const [error, setError]             = useState('');
+  const [success, setSuccess]         = useState('');
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,18 +28,10 @@ export function CustomFlashcardForm({ topics, onCreated }: { topics: Topic[]; on
         body: JSON.stringify({ topicId, front: front.trim(), back: back.trim(), note: note.trim() || undefined }),
       });
       if (!res.ok) throw new Error(await res.text());
-      const card = await res.json();
-      const t = topics.find(t => t.id === topicId)!;
-      onCreated({
-        ...card,
-        topic: { title: t.title, slug: t.id, system: t.system },
-        dueDate: new Date().toISOString(),
-        intervalDays: 0,
-        easeFactor: 2.5,
-        repetitions: 0,
-      });
       setFront(''); setBack(''); setNote('');
+      setSuccess('Card created!');
       setOpen(false);
+      router.refresh(); // re-fetch server component data so new card appears
     } catch (err) {
       setError(String(err));
     } finally {
@@ -46,9 +41,10 @@ export function CustomFlashcardForm({ topics, onCreated }: { topics: Topic[]; on
 
   return (
     <>
-      <button type="button" className="btn primary cf-create-btn" onClick={() => setOpen(true)}>
+      <button type="button" className="btn primary cf-create-btn" onClick={() => { setOpen(true); setSuccess(''); }}>
         + Create card
       </button>
+      {success && <span className="cf-success">{success}</span>}
 
       {open && (
         <div className="cf-overlay" onClick={() => setOpen(false)}>

@@ -142,10 +142,7 @@ export default async function FlashcardsPage({
             <h3>Custom flashcards</h3>
             <p className="muted">Create your own cards — they appear in your SRS queue like any other card.</p>
           </div>
-          <CustomFlashcardForm
-            topics={allTopics}
-            onCreated={() => {}}
-          />
+          <CustomFlashcardForm topics={allTopics} />
         </div>
       </main>
 

@@ -2777,3 +2777,4 @@ textarea:focus, input:focus, select:focus {
   body { background: #fff !important; color: #000 !important; }
   .analytics-page { gap: 16px !important; }
 }
+.cf-success { color: #34d399; font-size: 13px; font-weight: 500; }
