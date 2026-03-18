@@ -2813,8 +2813,8 @@ textarea:focus, input:focus, select:focus {
 .gsf-icon-btn--hovered { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: #fff; }
 
 /* Bottom row */
-.gsf-bottom { display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 24px; gap: 16px; }
-.gsf-big-title { font-family: var(--font-press-start, monospace); font-size: clamp(28px, 5vw, 64px); line-height: 1.1; color: rgba(255,255,255,0.06); letter-spacing: -0.02em; pointer-events: none; -webkit-user-select: none; user-select: none; }
+.gsf-bottom { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 32px; gap: 16px; }
+.gsf-big-title { font-family: var(--font-press-start, monospace); font-size: clamp(40px, 7vw, 96px); line-height: 1.15; color: rgba(255,255,255,0.75); letter-spacing: -0.02em; text-align: center; pointer-events: none; -webkit-user-select: none; user-select: none; }
 .gsf-copy { font-size: 11px; color: rgba(255,255,255,0.2); white-space: nowrap; padding-bottom: 4px; }
 
 /* Accent line */

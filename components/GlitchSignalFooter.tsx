@@ -4,10 +4,10 @@ import { useState } from 'react';
 
 const navItems = [
   { label: 'Home',       sup: null,   href: '/' },
-  { label: 'Dashboard',  sup: null,   href: '/dashboard' },
-  { label: 'Qbank',      sup: null,   href: '/questions' },
-  { label: 'Flashcards', sup: null,   href: '/flashcards' },
-  { label: 'Analytics',  sup: null,   href: '/analytics' },
+  { label: 'About',      sup: null,   href: '/about' },
+  { label: 'Projects',   sup: '08',   href: '/projects' },
+  { label: 'Journal',    sup: '05',   href: '/journal' },
+  { label: 'Contact us', sup: null,   href: '/contact' },
 ];
 
 const InstagramIcon = () => (
@@ -32,14 +32,20 @@ export function GlitchSignalFooter() {
           {/* Left */}
           <div className="gsf-left">
             <span className="gsf-stay">Stay Connected.</span>
-            <a href="/" className="gsf-url">
-              MEDREVISION OS<br />V2 · POWERED BY AI
+            <a href="https://magasin-three.vercel.app/" target="_blank" rel="noopener noreferrer" className="gsf-url">
+              HTTPS://MAGASIN-T<br />HREE.VERCEL.APP/
             </a>
             <p className="gsf-desc">
-              A complete medical revision platform — spaced repetition, exam-style Qbank,
-              clinical cases, readiness analytics, and AI-generated content. Built for serious students.
+              Glitch Signal projects represent a fusion of innovation,
+              design precision, and modern thinking. Each project is
+              developed with a clear vision, combining UI/UX,
+              architectural concepts, and creative direction to deliver
+              cohesive and impactful results. From digital platforms to
+              physical spaces, every detail is carefully crafted to ensure
+              functionality, aesthetic strength, and a seamless user or
+              spatial experience.
             </p>
-            <span className="gsf-made">Built for medical students &middot; Powered by Claude</span>
+            <span className="gsf-made">Made with creative idea &nbsp; Patience steam</span>
           </div>
 
           {/* Middle — nav */}
@@ -76,8 +82,8 @@ export function GlitchSignalFooter() {
 
         {/* Bottom */}
         <div className="gsf-bottom">
-          <div className="gsf-big-title">Med<br />Revision</div>
-          <span className="gsf-copy">&copy;{new Date().getFullYear()} MedRevision OS. All rights reserved.</span>
+          <div className="gsf-big-title">Glitch<br />Signal</div>
+          <span className="gsf-copy">&copy;2025 GlitchSignal Studio. All right reserved.</span>
         </div>
 
         <div className="gsf-accent-line" />
