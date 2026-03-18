@@ -2782,8 +2782,9 @@ textarea:focus, input:focus, select:focus {
 /* ─────────────────────────────────────────────────────────────────
    GLITCH SIGNAL FOOTER  (gsf-*)
 ───────────────────────────────────────────────────────────────── */
-.gsf-wrapper { width: 100%; padding: 0 24px 0; margin-top: 0; }
+.gsf-wrapper { width: 100%; padding: 0 24px 0; margin-top: 0; background: #000; }
 .gsf-border  { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 48px; padding-bottom: 0; position: relative; }
+[data-theme="light"] .gsf-wrapper { background: #0a0a0a; }
 
 /* Top row */
 .gsf-top  { display: grid; grid-template-columns: 1fr auto auto; gap: 48px; align-items: flex-start; padding-bottom: 48px; }
