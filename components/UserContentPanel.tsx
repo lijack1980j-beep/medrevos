@@ -157,7 +157,8 @@ export function UserContentPanel({
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     const data = await res.json();
-    setStatus({ ok: res.ok, msg: data.message ?? 'Done.' });
+    const msg  = data.error ? `${data.message ?? 'Failed'}: ${data.error}` : (data.message ?? 'Done.');
+    setStatus({ ok: res.ok, msg });
     if (res.ok) { (e.target as HTMLFormElement).reset(); setShowAddTopic(false); load(); router.refresh(); }
   }
 
@@ -194,7 +195,8 @@ export function UserContentPanel({
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     const data = await res.json();
-    setStatus({ ok: res.ok, msg: data.message ?? 'Done.' });
+    const msg  = data.error ? `${data.message ?? 'Failed'}: ${data.error}` : (data.message ?? 'Done.');
+    setStatus({ ok: res.ok, msg });
     if (res.ok) { (e.target as HTMLFormElement).reset(); setShowAddContent(false); loadContent(); load(); router.refresh(); }
   }
 
@@ -208,7 +210,8 @@ export function UserContentPanel({
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
     const data = await res.json();
-    setStatus({ ok: res.ok, msg: data.message ?? 'Updated.' });
+    const msg  = data.error ? `${data.message ?? 'Failed'}: ${data.error}` : (data.message ?? 'Updated.');
+    setStatus({ ok: res.ok, msg });
     if (res.ok) { setEditingItemId(null); loadContent(); router.refresh(); }
   }
 

@@ -7,12 +7,12 @@ import { requireAdmin } from '@/lib/auth';
 
 const createTopicSchema = z.object({
   kind:        z.literal('topic'),
-  title:       z.string().min(3),
-  slug:        z.string().min(3),
-  system:      z.string().min(2),
+  title:       z.string().min(1),
+  slug:        z.string().min(1),
+  system:      z.string().min(1),
   summary:     z.string().default(''),
   difficulty:  z.coerce.number().min(1).max(5).default(3),
-  estMinutes:  z.coerce.number().min(5).max(300).default(20),
+  estMinutes:  z.coerce.number().min(1).max(300).default(20),
   highYield:   z.coerce.boolean().optional(),
 });
 
