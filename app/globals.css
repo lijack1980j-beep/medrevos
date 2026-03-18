@@ -1008,6 +1008,18 @@ textarea:focus, input:focus, select:focus {
 .aig-explanation { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.55; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 9px; border-left: 2px solid rgba(96,165,250,0.4); }
 .aig-explanation-label { color: rgba(96,165,250,0.9); font-weight: 600; margin-right: 4px; }
 
+/* Destination info bar */
+.aig-dest-bar {
+  display: flex; align-items: center; gap: 0;
+  padding: 12px 32px; background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.aig-dest-item { display: flex; align-items: center; gap: 10px; flex: 1; }
+.aig-dest-icon { font-size: 20px; }
+.aig-dest-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.75); }
+.aig-dest-page { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 1px; }
+.aig-dest-sep { width: 1px; background: rgba(255,255,255,0.08); align-self: stretch; margin: 4px 20px; }
+
 /* Save bar */
 .aig-save-bar {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
@@ -1015,11 +1027,14 @@ textarea:focus, input:focus, select:focus {
   border-top: 1px solid rgba(255,255,255,0.06); flex-wrap: wrap;
 }
 .aig-save-left { display: flex; align-items: center; gap: 14px; }
-.aig-save-right { display: flex; align-items: center; gap: 16px; }
+.aig-save-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.aig-save-summary { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .aig-back-btn { padding: 9px 18px !important; border-radius: 10px !important; font-size: 13px !important; }
-.aig-status { font-size: 13px; color: #34d399; font-weight: 600; }
+.aig-status { font-size: 13px; font-weight: 600; }
+.aig-status--err { color: #f87171; }
 .aig-save-info { font-size: 13px; color: rgba(255,255,255,0.45); }
 .aig-save-info strong { color: rgba(255,255,255,0.75); }
+.aig-save-divider { color: rgba(255,255,255,0.2); font-size: 13px; }
 .aig-save-btn {
   padding: 11px 24px !important; font-size: 14px !important; border-radius: 12px !important;
   background: linear-gradient(135deg, #059669 0%, #0284c7 100%) !important; border: none !important;
@@ -1027,6 +1042,40 @@ textarea:focus, input:focus, select:focus {
 }
 .aig-save-btn:hover:not(:disabled) { box-shadow: 0 8px 28px rgba(5,150,105,0.45), 0 0 40px rgba(2,132,199,0.25) !important; transform: translateY(-2px) !important; }
 .aig-save-btn:disabled { opacity: 0.45 !important; cursor: not-allowed !important; transform: none !important; }
+
+/* Saved confirmation */
+.aig-saved {
+  padding: 48px 32px; display: flex; flex-direction: column; align-items: center;
+  gap: 12px; text-align: center;
+}
+.aig-saved-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(52,211,153,0.15); border: 2px solid rgba(52,211,153,0.4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #34d399;
+}
+.aig-saved-title { margin: 4px 0 0; font-size: 20px; font-weight: 700; color: #34d399; }
+.aig-saved-sub { margin: 0; font-size: 14px; color: rgba(255,255,255,0.5); }
+.aig-saved-destinations { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 8px 0 4px; }
+.aig-saved-link {
+  display: flex; align-items: center; gap: 12px; padding: 14px 20px;
+  border: 1px solid rgba(52,211,153,0.25); border-radius: 14px;
+  background: rgba(52,211,153,0.06); text-decoration: none;
+  transition: all 0.2s ease; min-width: 200px; text-align: left;
+}
+.aig-saved-link:hover { border-color: rgba(52,211,153,0.45); background: rgba(52,211,153,0.1); transform: translateY(-2px); }
+.aig-saved-link-icon { font-size: 22px; flex-shrink: 0; }
+.aig-saved-link-count { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.9); }
+.aig-saved-link-page { font-size: 12px; color: rgba(52,211,153,0.8); margin-top: 2px; }
+
+/* Preview section header with destination */
+.aig-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.aig-section-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.aig-section-dest {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px;
+  background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.25);
+  color: rgba(52,211,153,0.8);
+}
 
 /* ── Shared badge variant ── */
 .badge--hy {

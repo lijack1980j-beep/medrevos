@@ -17,20 +17,21 @@ const LOADING_MESSAGES = [
 ];
 
 export function AIGeneratorPanel({ topics }: { topics: { id: string; title: string }[] }) {
-  const [text, setText] = useState('');
-  const [topicId, setTopicId] = useState(topics[0]?.id ?? '');
+  const [text, setText]                   = useState('');
+  const [topicId, setTopicId]             = useState(topics[0]?.id ?? '');
   const [flashcardCount, setFlashcardCount] = useState(5);
   const [questionCount, setQuestionCount] = useState(3);
-  const [step, setStep] = useState<'input' | 'loading' | 'preview'>('input');
-  const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
-  const [results, setResults] = useState<GenerateResult | null>(null);
+  const [step, setStep]                   = useState<'input' | 'loading' | 'preview' | 'saved'>('input');
+  const [loadingMsg, setLoadingMsg]       = useState(LOADING_MESSAGES[0]);
+  const [results, setResults]             = useState<GenerateResult | null>(null);
   const [keptFlashcards, setKeptFlashcards] = useState<Set<number>>(new Set());
   const [keptQuestions, setKeptQuestions] = useState<Set<number>>(new Set());
-  const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('');
-  const [genError, setGenError] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [saving, setSaving]               = useState(false);
+  const [saveError, setSaveError]         = useState('');
+  const [savedCounts, setSavedCounts]     = useState({ flashcards: 0, questions: 0 });
+  const [genError, setGenError]           = useState('');
+  const fileRef                           = useRef<HTMLInputElement>(null);
+  const timerRef                          = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (step === 'loading') {
@@ -108,9 +109,8 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
   async function save() {
     if (!results || !topicId) return;
     setSaving(true);
-    setSaveStatus('');
-    let saved = 0;
-    let failed = 0;
+    setSaveError('');
+    let fcSaved = 0, qSaved = 0, failed = 0;
 
     for (const fc of results.flashcards.filter((_, i) => keptFlashcards.has(i))) {
       const r = await fetch('/api/admin/content', {
@@ -118,7 +118,7 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'flashcard', topicId, front: fc.front, back: fc.back, note: fc.note ?? '' }),
       });
-      if (r.ok) saved++; else failed++;
+      if (r.ok) fcSaved++; else failed++;
     }
 
     for (const q of results.questions.filter((_, i) => keptQuestions.has(i))) {
@@ -136,25 +136,30 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
           correctLabel: (correctOpt?.label ?? 'A') as 'A' | 'B' | 'C' | 'D',
         }),
       });
-      if (r.ok) saved++; else failed++;
+      if (r.ok) qSaved++; else failed++;
     }
 
     setSaving(false);
+    setSavedCounts({ flashcards: fcSaved, questions: qSaved });
+
     if (failed > 0) {
-      setSaveStatus(`${saved} saved, ${failed} failed.`);
+      setSaveError(`${fcSaved + qSaved} saved, ${failed} failed. Check the console for details.`);
     } else {
-      setSaveStatus(`${saved} item${saved !== 1 ? 's' : ''} saved.`);
-      setTimeout(() => {
-        setStep('input');
-        setText('');
-        setResults(null);
-        setSaveStatus('');
-      }, 2500);
+      setStep('saved');
     }
   }
 
-  const totalKept = keptFlashcards.size + keptQuestions.size;
-  const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
+  function reset() {
+    setStep('input');
+    setText('');
+    setResults(null);
+    setSaveError('');
+    setSavedCounts({ flashcards: 0, questions: 0 });
+  }
+
+  const totalKept   = keptFlashcards.size + keptQuestions.size;
+  const wordCount   = text.trim().split(/\s+/).filter(Boolean).length;
+  const topicTitle  = topics.find(t => t.id === topicId)?.title ?? '—';
 
   return (
     <div className="panel aig-panel">
@@ -163,8 +168,29 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
       <div className="aig-header">
         <div className="kicker">AI-powered</div>
         <h3 className="aig-title">Content Generator</h3>
-        <p className="muted">Paste notes or upload a file — Claude Opus 4.6 extracts high-yield flashcards and MCQ questions.</p>
+        <p className="muted">Paste notes or upload a file — Claude extracts high-yield flashcards and MCQ questions, then saves them straight to the student pages.</p>
       </div>
+
+      {/* ── Destination info bar ── */}
+      {step !== 'saved' && (
+        <div className="aig-dest-bar">
+          <div className="aig-dest-item">
+            <span className="aig-dest-icon">🃏</span>
+            <div>
+              <div className="aig-dest-label">Flashcards</div>
+              <div className="aig-dest-page">→ Flashcards page (SRS queue)</div>
+            </div>
+          </div>
+          <div className="aig-dest-sep" />
+          <div className="aig-dest-item">
+            <span className="aig-dest-icon">📝</span>
+            <div>
+              <div className="aig-dest-label">Questions</div>
+              <div className="aig-dest-page">→ Q-Bank (question practice)</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Input ── */}
       {step === 'input' && (
@@ -203,7 +229,7 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
             </div>
 
             <div className="aig-field">
-              <label>Flashcards</label>
+              <label>🃏 Flashcards</label>
               <div className="aig-counter">
                 <button type="button" onClick={() => setFlashcardCount(n => Math.max(0, n - 1))} disabled={flashcardCount === 0}>−</button>
                 <span className="aig-counter-value">{flashcardCount}</span>
@@ -212,7 +238,7 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
             </div>
 
             <div className="aig-field">
-              <label>Questions</label>
+              <label>📝 Questions</label>
               <div className="aig-counter">
                 <button type="button" onClick={() => setQuestionCount(n => Math.max(0, n - 1))} disabled={questionCount === 0}>−</button>
                 <span className="aig-counter-value">{questionCount}</span>
@@ -245,7 +271,7 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
         <div className="aig-loading">
           <div className="aig-spinner" />
           <div className="aig-loading-title">{loadingMsg}</div>
-          <p className="aig-loading-note">Claude Opus 4.6 is reading your material</p>
+          <p className="aig-loading-note">Claude is reading your material</p>
         </div>
       )}
 
@@ -258,9 +284,10 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
             {results.flashcards.length > 0 && (
               <div>
                 <div className="aig-section-header">
-                  <div>
-                    <span className="aig-section-title">Flashcards</span>
+                  <div className="aig-section-header-left">
+                    <span className="aig-section-title">🃏 Flashcards</span>
                     <span className="aig-section-count">{keptFlashcards.size} / {results.flashcards.length} selected</span>
+                    <span className="aig-section-dest">→ Flashcards page</span>
                   </div>
                   <button type="button" className="aig-toggle-all" onClick={toggleAllFlashcards}>
                     {results.flashcards.every((_, i) => keptFlashcards.has(i)) ? 'Deselect all' : 'Select all'}
@@ -291,9 +318,10 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
             {results.questions.length > 0 && (
               <div>
                 <div className="aig-section-header">
-                  <div>
-                    <span className="aig-section-title">MCQ Questions</span>
+                  <div className="aig-section-header-left">
+                    <span className="aig-section-title">📝 MCQ Questions</span>
                     <span className="aig-section-count">{keptQuestions.size} / {results.questions.length} selected</span>
+                    <span className="aig-section-dest">→ Q-Bank</span>
                   </div>
                   <button type="button" className="aig-toggle-all" onClick={toggleAllQuestions}>
                     {results.questions.every((_, i) => keptQuestions.has(i)) ? 'Deselect all' : 'Select all'}
@@ -337,13 +365,20 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
           <div className="aig-save-bar">
             <div className="aig-save-left">
               <button type="button" className="btn aig-back-btn" onClick={() => setStep('input')}>← Back</button>
-              {saveStatus && <span className="aig-status">{saveStatus}</span>}
+              {saveError && <span className="aig-status aig-status--err">{saveError}</span>}
             </div>
             <div className="aig-save-right">
-              <span className="aig-save-info">
-                <strong>{totalKept}</strong> item{totalKept !== 1 ? 's' : ''} selected · Topic:{' '}
-                <strong>{topics.find(t => t.id === topicId)?.title ?? '—'}</strong>
-              </span>
+              <div className="aig-save-summary">
+                <span className="aig-save-info">
+                  <strong>{keptFlashcards.size}</strong> flashcard{keptFlashcards.size !== 1 ? 's' : ''} → Flashcards page
+                </span>
+                <span className="aig-save-divider">·</span>
+                <span className="aig-save-info">
+                  <strong>{keptQuestions.size}</strong> question{keptQuestions.size !== 1 ? 's' : ''} → Q-Bank
+                </span>
+                <span className="aig-save-divider">·</span>
+                <span className="aig-save-info">Topic: <strong>{topicTitle}</strong></span>
+              </div>
               <button
                 type="button"
                 className="btn primary aig-save-btn"
@@ -355,6 +390,40 @@ export function AIGeneratorPanel({ topics }: { topics: { id: string; title: stri
             </div>
           </div>
         </>
+      )}
+
+      {/* ── Saved confirmation ── */}
+      {step === 'saved' && (
+        <div className="aig-saved">
+          <div className="aig-saved-icon">✓</div>
+          <h3 className="aig-saved-title">Content saved!</h3>
+          <p className="aig-saved-sub">Under topic: <strong>{topicTitle}</strong></p>
+
+          <div className="aig-saved-destinations">
+            {savedCounts.flashcards > 0 && (
+              <a href="/flashcards" target="_blank" rel="noopener noreferrer" className="aig-saved-link">
+                <span className="aig-saved-link-icon">🃏</span>
+                <div>
+                  <div className="aig-saved-link-count">{savedCounts.flashcards} flashcard{savedCounts.flashcards !== 1 ? 's' : ''}</div>
+                  <div className="aig-saved-link-page">View in Flashcards page →</div>
+                </div>
+              </a>
+            )}
+            {savedCounts.questions > 0 && (
+              <a href="/questions" target="_blank" rel="noopener noreferrer" className="aig-saved-link">
+                <span className="aig-saved-link-icon">📝</span>
+                <div>
+                  <div className="aig-saved-link-count">{savedCounts.questions} question{savedCounts.questions !== 1 ? 's' : ''}</div>
+                  <div className="aig-saved-link-page">View in Q-Bank →</div>
+                </div>
+              </a>
+            )}
+          </div>
+
+          <button type="button" className="btn primary" onClick={reset}>
+            Generate more content
+          </button>
+        </div>
       )}
     </div>
   );
