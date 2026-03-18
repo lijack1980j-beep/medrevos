@@ -11,6 +11,7 @@ export default async function StudyPage({ searchParams }: { searchParams?: { top
   checkAccess(user, 'study');
 
   const topics = await prisma.topic.findMany({
+    where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user!.id }] },
     include: {
       lessons: true,
       _count: { select: { flashcards: true, questions: true } },

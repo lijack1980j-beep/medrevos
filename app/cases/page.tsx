@@ -9,6 +9,7 @@ export default async function CasesPage() {
   const user = await requireUser();
   checkAccess(user, 'cases');
   const cases = await prisma.caseStudy.findMany({
+    where: { topic: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] } },
     include: { topic: true },
     orderBy: [{ topic: { system: 'asc' } }, { title: 'asc' }],
   });

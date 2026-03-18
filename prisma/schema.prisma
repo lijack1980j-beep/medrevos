@@ -58,6 +58,7 @@ model User {
   customCards      Flashcard[]         @relation("CustomFlashcards")
   calendarEvents   CalendarEvent[]
   blockedSections  String[]            @default([])
+  ownedTopics      Topic[]             @relation("UserOwnedTopics")
 }
 
 model Session {
@@ -70,22 +71,24 @@ model Session {
 }
 
 model Topic {
-  id          String      @id @default(cuid())
-  slug        String      @unique
-  title       String
-  system      String
-  summary     String
-  difficulty  Int
-  estMinutes  Int
-  highYield   Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  lessons     Lesson[]
-  questions   Question[]
-  flashcards  Flashcard[]
-  cases       CaseStudy[]
-  progress    UserTopicProgress[]
-  notes       TopicNote[]
+  id               String              @id @default(cuid())
+  slug             String              @unique
+  title            String
+  system           String
+  summary          String
+  difficulty       Int
+  estMinutes       Int
+  highYield        Boolean             @default(false)
+  assignedToUserId String?
+  assignedTo       User?               @relation("UserOwnedTopics", fields: [assignedToUserId], references: [id], onDelete: Cascade)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  lessons          Lesson[]
+  questions        Question[]
+  flashcards       Flashcard[]
+  cases            CaseStudy[]
+  progress         UserTopicProgress[]
+  notes            TopicNote[]
 }
 
 model Lesson {

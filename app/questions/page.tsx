@@ -12,7 +12,7 @@ export default async function QuestionsPage({ searchParams }: { searchParams?: {
 
   const [questions, bookmarks, wrongAttempts, allAttempts, srsStates] = await Promise.all([
     prisma.question.findMany({
-      where: topicSlug ? { topic: { slug: topicSlug } } : undefined,
+      where: { topic: { ...(topicSlug ? { slug: topicSlug } : {}), OR: [{ assignedToUserId: null }, { assignedToUserId: user!.id }] } },
       include: { options: true, topic: true },
       orderBy: { createdAt: 'asc' },
     }),

@@ -5,6 +5,7 @@ import { AdminForms } from '@/components/AdminForms';
 import { ContentLibrary } from '@/components/ContentLibrary';
 import { AIGeneratorPanel } from '@/components/AIGeneratorPanel';
 import { ContentManager } from '@/components/ContentManager';
+import { UserContentPanel } from '@/components/UserContentPanel';
 import { SECTIONS, type SectionKey } from '@/lib/access';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -27,7 +28,7 @@ type AdminUser = {
 type Counts = [number, number, number, number, number];
 
 // ── Sidebar config ───────────────────────────────────────────────────────────
-type PanelId = 'overview' | 'users' | 'topics' | 'lessons' | 'questions' | 'flashcards' | 'cases' | 'ai' | 'library';
+type PanelId = 'overview' | 'users' | 'user-content' | 'topics' | 'lessons' | 'questions' | 'flashcards' | 'cases' | 'ai' | 'library';
 
 const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = [
   { id: 'overview',   label: 'Overview',        icon: '📊' },
@@ -47,9 +48,11 @@ export function AdminShell({ topics, flatTopics, counts }: {
   flatTopics: FlatTopic[];
   counts: Counts;
 }) {
-  const [panel, setPanel]           = useState<PanelId>('overview');
-  const [collapsed, setCollapsed]   = useState(false);
-  const [contentOpen, setContentOpen] = useState(true);
+  const [panel, setPanel]               = useState<PanelId>('overview');
+  const [collapsed, setCollapsed]       = useState(false);
+  const [contentOpen, setContentOpen]   = useState(true);
+  const [selectedUserId,   setSelectedUserId]   = useState<string>('');
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
 
   return (
     <div className={`adm-shell${collapsed ? ' adm-shell--collapsed' : ''}`}>
@@ -116,15 +119,16 @@ export function AdminShell({ topics, flatTopics, counts }: {
 
       {/* ── Main area ── */}
       <main className="adm-main">
-        {panel === 'overview'   && <OverviewPanel counts={counts} />}
-        {panel === 'users'      && <UsersPanel />}
-        {panel === 'topics'     && <AdminForms topics={flatTopics} activeForm="topic" />}
-        {panel === 'lessons'    && <><AdminForms topics={flatTopics} activeForm="lesson" /><ContentManager type="lesson" topics={flatTopics} /></>}
-        {panel === 'questions'  && <><AdminForms topics={flatTopics} activeForm="question" /><ContentManager type="question" topics={flatTopics} /></>}
-        {panel === 'flashcards' && <><AdminForms topics={flatTopics} activeForm="flashcard" /><ContentManager type="flashcard" topics={flatTopics} /></>}
-        {panel === 'cases'      && <><AdminForms topics={flatTopics} activeForm="case" /><ContentManager type="case" topics={flatTopics} /></>}
-        {panel === 'ai'         && <AIGeneratorPanel topics={flatTopics} />}
-        {panel === 'library'    && <ContentLibrary topics={topics} />}
+        {panel === 'overview'      && <OverviewPanel counts={counts} />}
+        {panel === 'users'         && <UsersPanel onManageContent={(id, name) => { setSelectedUserId(id); setSelectedUserName(name); setPanel('user-content'); }} />}
+        {panel === 'user-content'  && <UserContentPanel userId={selectedUserId} userName={selectedUserName} onBack={() => setPanel('users')} />}
+        {panel === 'topics'        && <AdminForms topics={flatTopics} activeForm="topic" />}
+        {panel === 'lessons'       && <><AdminForms topics={flatTopics} activeForm="lesson" /><ContentManager type="lesson" topics={flatTopics} /></>}
+        {panel === 'questions'     && <><AdminForms topics={flatTopics} activeForm="question" /><ContentManager type="question" topics={flatTopics} /></>}
+        {panel === 'flashcards'    && <><AdminForms topics={flatTopics} activeForm="flashcard" /><ContentManager type="flashcard" topics={flatTopics} /></>}
+        {panel === 'cases'         && <><AdminForms topics={flatTopics} activeForm="case" /><ContentManager type="case" topics={flatTopics} /></>}
+        {panel === 'ai'            && <AIGeneratorPanel topics={flatTopics} />}
+        {panel === 'library'       && <ContentLibrary topics={topics} />}
       </main>
     </div>
   );
@@ -160,7 +164,7 @@ function OverviewPanel({ counts }: { counts: Counts }) {
 }
 
 // ── Users panel ──────────────────────────────────────────────────────────────
-function UsersPanel() {
+function UsersPanel({ onManageContent }: { onManageContent: (id: string, name: string) => void }) {
   const [users, setUsers]   = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState('');
@@ -247,6 +251,16 @@ function UsersPanel() {
               </div>
 
               <div className="adm-user-controls">
+                {/* Manage Content button */}
+                <button
+                  type="button"
+                  className="btn adm-manage-content-btn"
+                  onClick={() => onManageContent(user.id, user.name)}
+                  title="Manage this user's content"
+                >
+                  📚 Manage Content
+                </button>
+
                 {/* Role badge toggle */}
                 <button
                   type="button"

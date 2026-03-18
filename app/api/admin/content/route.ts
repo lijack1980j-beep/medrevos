@@ -24,8 +24,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 
+    const topicId = searchParams.get('topicId') ?? undefined;
+
     if (type === 'lesson') {
       const rows = await prisma.lesson.findMany({
+        where: topicId ? { topicId } : {},
         include: { topic: { select: { id: true, title: true } } },
         orderBy: [{ topic: { title: 'asc' } }, { title: 'asc' }],
       });
@@ -34,6 +37,7 @@ export async function GET(request: Request) {
 
     if (type === 'question') {
       const rows = await prisma.question.findMany({
+        where: topicId ? { topicId } : {},
         include: { topic: { select: { id: true, title: true } }, options: true },
         orderBy: [{ topic: { title: 'asc' } }, { createdAt: 'desc' }],
       });
@@ -42,6 +46,7 @@ export async function GET(request: Request) {
 
     if (type === 'flashcard') {
       const rows = await prisma.flashcard.findMany({
+        where: topicId ? { topicId } : {},
         include: { topic: { select: { id: true, title: true } } },
         orderBy: [{ topic: { title: 'asc' } }, { createdAt: 'desc' }],
       });
@@ -50,6 +55,7 @@ export async function GET(request: Request) {
 
     if (type === 'case') {
       const rows = await prisma.caseStudy.findMany({
+        where: topicId ? { topicId } : {},
         include: { topic: { select: { id: true, title: true } } },
         orderBy: [{ topic: { title: 'asc' } }, { title: 'asc' }],
       });

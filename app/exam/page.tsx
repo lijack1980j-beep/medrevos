@@ -9,6 +9,7 @@ export default async function ExamPage() {
   const user = await requireUser();
   checkAccess(user, 'exam');
   const topics = await prisma.topic.findMany({
+    where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] },
     select: { id: true, title: true, system: true, _count: { select: { questions: true } } },
     orderBy: [{ system: 'asc' }, { title: 'asc' }],
   });
