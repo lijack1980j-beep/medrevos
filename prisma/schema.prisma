@@ -7,6 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CalendarEventType {
+  EVENT
+  EXAM
+  NOTE
+}
+
 enum QuestionType {
   SINGLE_BEST
   MULTI_SELECT
@@ -48,8 +54,9 @@ model User {
   bookmarks      Bookmark[]
   notes          TopicNote[]
   examSessions   ExamSession[]
-  questionSRS    QuestionSRSState[]
-  customCards    Flashcard[]         @relation("CustomFlashcards")
+  questionSRS     QuestionSRSState[]
+  customCards     Flashcard[]         @relation("CustomFlashcards")
+  calendarEvents  CalendarEvent[]
 }
 
 model Session {
@@ -256,6 +263,18 @@ model ExamSession {
   createdAt    DateTime   @default(now())
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   answers      ExamAnswer[]
+}
+
+model CalendarEvent {
+  id        String            @id @default(cuid())
+  userId    String
+  type      CalendarEventType
+  title     String
+  dateStr   String            // 'YYYY-MM-DD'
+  note      String?
+  color     String?
+  createdAt DateTime          @default(now())
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ExamAnswer {
