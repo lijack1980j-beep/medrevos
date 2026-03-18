@@ -2841,3 +2841,33 @@ textarea:focus, input:focus, select:focus {
   .gsf-big-title { font-size: 28px; }
   .gsf-bottom { flex-direction: column; align-items: flex-start; }
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   THEME COLOR CUSTOMIZER  (tcc-*)
+───────────────────────────────────────────────────────────────── */
+.tcc-root { display: flex; flex-direction: column; gap: 20px; }
+
+.tcc-section { display: flex; flex-direction: column; gap: 10px; }
+.tcc-section-header { display: flex; align-items: center; gap: 10px; }
+.tcc-mode-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.tcc-preview-pill { width: 20px; height: 20px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.15); flex-shrink: 0; transition: background 0.2s; }
+[data-theme="light"] .tcc-preview-pill { border-color: rgba(0,0,0,0.15); }
+
+.tcc-swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tcc-swatch {
+  width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+.tcc-swatch:hover { transform: scale(1.15); }
+.tcc-swatch--active { transform: scale(1.15); }
+
+.tcc-custom { position: relative; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.tcc-color-input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; border: none; padding: 0; }
+.tcc-custom-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px dashed rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; font-size: 13px; color: rgba(255,255,255,0.5); pointer-events: none; transition: background 0.15s; }
+.tcc-custom:hover .tcc-custom-icon { background: rgba(255,255,255,0.14); color: #fff; }
+[data-theme="light"] .tcc-custom-icon { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.2); color: rgba(0,0,0,0.4); }
+[data-theme="light"] .tcc-custom:hover .tcc-custom-icon { background: rgba(0,0,0,0.1); color: #000; }
+
+.tcc-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+.tcc-reset-btn { font-size: 13px; }

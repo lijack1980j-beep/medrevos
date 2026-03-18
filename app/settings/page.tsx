@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ThemeCustomizer } from '@/components/ThemeCustomizer';
 
 export default function SettingsPage() {
   const [name, setName] = useState('');
@@ -95,6 +96,14 @@ export default function SettingsPage() {
             </div>
             <p className="settings-hint">Shown in the dashboard and quick stats.</p>
           </div>
+        </div>
+
+      </div>
+
+        <div className="panel settings-section">
+          <h3 className="settings-section-title">Accent color</h3>
+          <p className="settings-hint" style={{ marginBottom: 16 }}>Customize the accent color for dark and light modes. Changes apply instantly as a live preview.</p>
+          <ThemeCustomizer />
         </div>
 
       </div>
