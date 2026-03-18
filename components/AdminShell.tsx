@@ -45,24 +45,38 @@ const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = 
   { id: 'library',    label: 'Content Library', icon: '📚', group: 'Tools' },
 ];
 
-// Sidebar active: user-content sub-panel highlights "users"
 function sidebarActive(current: PanelId, item: PanelId) {
   if (current === 'user-content') return item === 'users';
   return current === item;
 }
 
-// ── Content panel wrapper ─────────────────────────────────────────────────────
-function ContentPanel({
-  kicker, title, description, children,
-}: { kicker: string; title: string; description: string; children: React.ReactNode }) {
+// ── Split-pane content panel ──────────────────────────────────────────────────
+function SplitPanel({
+  kicker, title, description,
+  leftLabel, left,
+  rightLabel, right,
+}: {
+  kicker: string; title: string; description: string;
+  leftLabel: string; left: React.ReactNode;
+  rightLabel: string; right: React.ReactNode;
+}) {
   return (
     <div className="adm-panel adm-content-panel">
-      <div className="adm-panel-header">
+      <div className="adm-panel-header adm-panel-header--pad">
         <div className="kicker">{kicker}</div>
         <h2>{title}</h2>
         <p className="muted">{description}</p>
       </div>
-      {children}
+      <div className="adm-split">
+        <div className="adm-split-left">
+          <h3 className="adm-section-label">{leftLabel}</h3>
+          {left}
+        </div>
+        <div className="adm-split-right">
+          <h3 className="adm-section-label">{rightLabel}</h3>
+          {right}
+        </div>
+      </div>
     </div>
   );
 }
@@ -86,6 +100,8 @@ export function AdminShell({ topics, flatTopics, counts }: {
     setSelectedUserName(name);
     setPanel('user-content');
   }
+
+  const refresh = () => setCmRefreshKey(k => k + 1);
 
   return (
     <div className={`adm-shell${collapsed ? ' adm-shell--collapsed' : ''}`}>
@@ -156,7 +172,9 @@ export function AdminShell({ topics, flatTopics, counts }: {
       {/* ── Main area ── */}
       <main className="adm-main">
 
-        {panel === 'overview' && <OverviewPanel counts={counts} />}
+        {panel === 'overview' && (
+          <OverviewPanel counts={counts} onNavigate={setPanel} />
+        )}
 
         {panel === 'users' && (
           <UsersPanel onManageContent={openUserContent} />
@@ -171,81 +189,58 @@ export function AdminShell({ topics, flatTopics, counts }: {
         )}
 
         {panel === 'topics' && (
-          <ContentPanel
-            kicker="Content"
-            title="Topics"
-            description="Global topics are visible to all students. Create a topic here first, then add lessons, questions, flashcards and cases under it."
-          >
-            <AdminForms topics={flatTopics} activeForm="topic" onSaved={() => setCmRefreshKey(k => k + 1)} />
-          </ContentPanel>
+          <SplitPanel
+            kicker="Content" title="Topics"
+            description="Global topics are visible to all students. Create a topic first, then add lessons, questions, flashcards and cases under it."
+            leftLabel="Create topic"
+            left={<AdminForms topics={flatTopics} activeForm="topic" onSaved={refresh} />}
+            rightLabel="Manage topics"
+            right={<AdminForms topics={flatTopics} activeForm="topic" onSaved={refresh} />}
+          />
         )}
 
         {panel === 'lessons' && (
-          <ContentPanel
-            kicker="Content"
-            title="Lessons"
+          <SplitPanel
+            kicker="Content" title="Lessons"
             description="Write high-yield study lessons with clinical pearls and pitfalls. Lessons appear in the Study page for all students."
-          >
-            <section className="adm-create-section">
-              <h3 className="adm-section-label">Create lesson</h3>
-              <AdminForms topics={flatTopics} activeForm="lesson" onSaved={() => setCmRefreshKey(k => k + 1)} />
-            </section>
-            <section className="adm-manage-section">
-              <h3 className="adm-section-label">Manage lessons</h3>
-              <ContentManager type="lesson" refreshKey={cmRefreshKey} globalOnly />
-            </section>
-          </ContentPanel>
+            leftLabel="Create lesson"
+            left={<AdminForms topics={flatTopics} activeForm="lesson" onSaved={refresh} />}
+            rightLabel="All lessons"
+            right={<ContentManager type="lesson" refreshKey={cmRefreshKey} globalOnly />}
+          />
         )}
 
         {panel === 'questions' && (
-          <ContentPanel
-            kicker="Content"
-            title="Questions"
+          <SplitPanel
+            kicker="Content" title="Questions"
             description="Build USMLE-style MCQs with explanations and difficulty ratings. Questions appear in the Q-Bank for all students."
-          >
-            <section className="adm-create-section">
-              <h3 className="adm-section-label">Create question</h3>
-              <AdminForms topics={flatTopics} activeForm="question" onSaved={() => setCmRefreshKey(k => k + 1)} />
-            </section>
-            <section className="adm-manage-section">
-              <h3 className="adm-section-label">Manage questions</h3>
-              <ContentManager type="question" refreshKey={cmRefreshKey} globalOnly />
-            </section>
-          </ContentPanel>
+            leftLabel="Create question"
+            left={<AdminForms topics={flatTopics} activeForm="question" onSaved={refresh} />}
+            rightLabel="All questions"
+            right={<ContentManager type="question" refreshKey={cmRefreshKey} globalOnly />}
+          />
         )}
 
         {panel === 'flashcards' && (
-          <ContentPanel
-            kicker="Content"
-            title="Flashcards"
-            description="Create spaced-repetition flashcards. Students review them in their SRS queue."
-          >
-            <section className="adm-create-section">
-              <h3 className="adm-section-label">Create flashcard</h3>
-              <AdminForms topics={flatTopics} activeForm="flashcard" onSaved={() => setCmRefreshKey(k => k + 1)} />
-            </section>
-            <section className="adm-manage-section">
-              <h3 className="adm-section-label">Manage flashcards</h3>
-              <ContentManager type="flashcard" refreshKey={cmRefreshKey} globalOnly />
-            </section>
-          </ContentPanel>
+          <SplitPanel
+            kicker="Content" title="Flashcards"
+            description="Create spaced-repetition flashcards. Students review them in their SRS queue on the Flashcards page."
+            leftLabel="Create flashcard"
+            left={<AdminForms topics={flatTopics} activeForm="flashcard" onSaved={refresh} />}
+            rightLabel="All flashcards"
+            right={<ContentManager type="flashcard" refreshKey={cmRefreshKey} globalOnly />}
+          />
         )}
 
         {panel === 'cases' && (
-          <ContentPanel
-            kicker="Content"
-            title="Cases"
+          <SplitPanel
+            kicker="Content" title="Cases"
             description="Add clinical case studies: presentation, investigations, diagnosis and management. Cases appear in the Cases page for all students."
-          >
-            <section className="adm-create-section">
-              <h3 className="adm-section-label">Create case</h3>
-              <AdminForms topics={flatTopics} activeForm="case" onSaved={() => setCmRefreshKey(k => k + 1)} />
-            </section>
-            <section className="adm-manage-section">
-              <h3 className="adm-section-label">Manage cases</h3>
-              <ContentManager type="case" refreshKey={cmRefreshKey} globalOnly />
-            </section>
-          </ContentPanel>
+            leftLabel="Create case"
+            left={<AdminForms topics={flatTopics} activeForm="case" onSaved={refresh} />}
+            rightLabel="All cases"
+            right={<ContentManager type="case" refreshKey={cmRefreshKey} globalOnly />}
+          />
         )}
 
         {panel === 'ai'      && <AIGeneratorPanel topics={flatTopics} />}
@@ -257,21 +252,33 @@ export function AdminShell({ topics, flatTopics, counts }: {
 }
 
 // ── Overview panel ────────────────────────────────────────────────────────────
-function OverviewPanel({ counts }: { counts: Counts }) {
+const QUICK_ACTIONS: { id: PanelId; icon: string; label: string; desc: string; color: string }[] = [
+  { id: 'topics',     icon: '🗂️',  label: 'Topics',          desc: 'Create & manage global topics',    color: 'purple' },
+  { id: 'lessons',    icon: '📖', label: 'Lessons',          desc: 'Write study lessons → Study page', color: 'blue'   },
+  { id: 'questions',  icon: '📝', label: 'Questions',        desc: 'Build MCQs → Q-Bank',              color: 'green'  },
+  { id: 'flashcards', icon: '🃏', label: 'Flashcards',       desc: 'SRS cards → Flashcards page',      color: 'amber'  },
+  { id: 'cases',      icon: '🩺', label: 'Cases',            desc: 'Clinical cases → Cases page',      color: 'pink'   },
+  { id: 'ai',         icon: '🤖', label: 'AI Generator',     desc: 'Generate from notes',              color: 'indigo' },
+  { id: 'users',      icon: '👥', label: 'Users',            desc: 'Manage access & roles',            color: 'cyan'   },
+  { id: 'library',    icon: '📚', label: 'Content Library',  desc: 'Browse all content',               color: 'rose'   },
+];
+
+function OverviewPanel({ counts, onNavigate }: { counts: Counts; onNavigate: (p: PanelId) => void }) {
   const stats = [
-    { label: 'Users',      value: counts[0], icon: '👥', cls: 'adm-stat-value--accent' },
+    { label: 'Users',      value: counts[0], icon: '👥', cls: 'adm-stat-value--accent'  },
     { label: 'Topics',     value: counts[1], icon: '🗂️',  cls: 'adm-stat-value--purple' },
-    { label: 'Questions',  value: counts[2], icon: '📝', cls: 'adm-stat-value--green'  },
-    { label: 'Flashcards', value: counts[3], icon: '🃏', cls: 'adm-stat-value--amber'  },
-    { label: 'Lessons',    value: counts[4], icon: '📖', cls: 'adm-stat-value--pink'   },
+    { label: 'Questions',  value: counts[2], icon: '📝', cls: 'adm-stat-value--green'   },
+    { label: 'Flashcards', value: counts[3], icon: '🃏', cls: 'adm-stat-value--amber'   },
+    { label: 'Lessons',    value: counts[4], icon: '📖', cls: 'adm-stat-value--pink'    },
   ];
   return (
     <div className="adm-panel">
       <div className="adm-panel-header">
         <div className="kicker">Admin</div>
         <h2>Overview</h2>
-        <p className="muted">Platform-wide statistics at a glance.</p>
+        <p className="muted">Platform-wide statistics and quick navigation.</p>
       </div>
+
       <div className="adm-overview-grid">
         {stats.map(s => (
           <div key={s.label} className="adm-stat-card">
@@ -280,6 +287,24 @@ function OverviewPanel({ counts }: { counts: Counts }) {
             <div className="adm-stat-label">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      <div className="adm-overview-section">
+        <h3 className="adm-section-label">Quick navigation</h3>
+        <div className="adm-quick-grid">
+          {QUICK_ACTIONS.map(a => (
+            <button
+              key={a.id}
+              type="button"
+              className={`adm-quick-card adm-quick-card--${a.color}`}
+              onClick={() => onNavigate(a.id)}
+            >
+              <span className="adm-quick-icon">{a.icon}</span>
+              <span className="adm-quick-label">{a.label}</span>
+              <span className="adm-quick-desc">{a.desc}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
