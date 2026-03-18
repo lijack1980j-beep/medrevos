@@ -9,19 +9,20 @@ type Topic = {
 };
 type FormStatus = { ok: boolean; message: string } | null;
 
-export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm?: 'topic' | 'lesson' | 'flashcard' | 'question' }) {
+export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm?: 'topic' | 'lesson' | 'flashcard' | 'question' | 'case' }) {
   const router = useRouter();
   const [topicStatus,    setTopicStatus]    = useState<FormStatus>(null);
   const [lessonStatus,   setLessonStatus]   = useState<FormStatus>(null);
   const [cardStatus,     setCardStatus]     = useState<FormStatus>(null);
   const [questionStatus, setQuestionStatus] = useState<FormStatus>(null);
+  const [caseStatus,     setCaseStatus]     = useState<FormStatus>(null);
   const [deleteStatus,   setDeleteStatus]   = useState<FormStatus>(null);
   const [editingId,      setEditingId]      = useState<string | null>(null);
   const [editStatus,     setEditStatus]     = useState<FormStatus>(null);
 
   const setters: Record<string, (s: FormStatus) => void> = {
     topic: setTopicStatus, lesson: setLessonStatus,
-    flashcard: setCardStatus, question: setQuestionStatus,
+    flashcard: setCardStatus, question: setQuestionStatus, case: setCaseStatus,
   };
 
   async function submitForm(event: React.FormEvent<HTMLFormElement>, kind: string) {
@@ -66,7 +67,7 @@ export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm
     if (response.ok) router.refresh();
   }
 
-  const show = (kind: 'topic' | 'lesson' | 'flashcard' | 'question') =>
+  const show = (kind: 'topic' | 'lesson' | 'flashcard' | 'question' | 'case') =>
     !activeForm || activeForm === kind;
 
   return (
@@ -134,6 +135,21 @@ export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm
           {questionStatus && <p className={`admin-form-status${questionStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{questionStatus.message}</p>}
         </form>}
       </div>
+
+      {show('case') && <form className="panel" onSubmit={(e) => submitForm(e, 'case')}>
+        <h3>Create case</h3>
+        <div className="list">
+          <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+          <label>Title<input name="title" required /></label>
+          <label>Chief complaint<textarea name="chiefComplaint" rows={3} required /></label>
+          <label>Findings<textarea name="findings" rows={4} required /></label>
+          <label>Investigations<textarea name="investigations" rows={4} required /></label>
+          <label>Diagnosis<textarea name="diagnosis" rows={3} required /></label>
+          <label>Management<textarea name="management" rows={4} required /></label>
+        </div>
+        <button type="submit" className="btn primary admin-form-btn">Save case</button>
+        {caseStatus && <p className={`admin-form-status${caseStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{caseStatus.message}</p>}
+      </form>}
 
       {/* Topic management with inline edit — shown in Topics panel or no filter */}
       {show('topic') && <div className="panel">

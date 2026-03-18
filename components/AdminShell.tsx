@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { AdminForms } from '@/components/AdminForms';
 import { ContentLibrary } from '@/components/ContentLibrary';
 import { AIGeneratorPanel } from '@/components/AIGeneratorPanel';
+import { ContentManager } from '@/components/ContentManager';
 import { SECTIONS, type SectionKey } from '@/lib/access';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -26,7 +27,7 @@ type AdminUser = {
 type Counts = [number, number, number, number, number];
 
 // ── Sidebar config ───────────────────────────────────────────────────────────
-type PanelId = 'overview' | 'users' | 'topics' | 'lessons' | 'questions' | 'flashcards' | 'ai' | 'library';
+type PanelId = 'overview' | 'users' | 'topics' | 'lessons' | 'questions' | 'flashcards' | 'cases' | 'ai' | 'library';
 
 const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = [
   { id: 'overview',   label: 'Overview',        icon: '📊' },
@@ -35,6 +36,7 @@ const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = 
   { id: 'lessons',    label: 'Lessons',         icon: '📖', group: 'Content' },
   { id: 'questions',  label: 'Questions',       icon: '📝', group: 'Content' },
   { id: 'flashcards', label: 'Flashcards',      icon: '🃏', group: 'Content' },
+  { id: 'cases',      label: 'Cases',           icon: '🩺', group: 'Content' },
   { id: 'ai',         label: 'AI Generator',    icon: '🤖' },
   { id: 'library',    label: 'Content Library', icon: '📚' },
 ];
@@ -114,12 +116,13 @@ export function AdminShell({ topics, flatTopics, counts }: {
 
       {/* ── Main area ── */}
       <main className="adm-main">
-        {panel === 'overview'   && <OverviewPanel   counts={counts} />}
+        {panel === 'overview'   && <OverviewPanel counts={counts} />}
         {panel === 'users'      && <UsersPanel />}
         {panel === 'topics'     && <AdminForms topics={flatTopics} activeForm="topic" />}
-        {panel === 'lessons'    && <AdminForms topics={flatTopics} activeForm="lesson" />}
-        {panel === 'questions'  && <AdminForms topics={flatTopics} activeForm="question" />}
-        {panel === 'flashcards' && <AdminForms topics={flatTopics} activeForm="flashcard" />}
+        {panel === 'lessons'    && <><AdminForms topics={flatTopics} activeForm="lesson" /><ContentManager type="lesson" topics={flatTopics} /></>}
+        {panel === 'questions'  && <><AdminForms topics={flatTopics} activeForm="question" /><ContentManager type="question" topics={flatTopics} /></>}
+        {panel === 'flashcards' && <><AdminForms topics={flatTopics} activeForm="flashcard" /><ContentManager type="flashcard" topics={flatTopics} /></>}
+        {panel === 'cases'      && <><AdminForms topics={flatTopics} activeForm="case" /><ContentManager type="case" topics={flatTopics} /></>}
         {panel === 'ai'         && <AIGeneratorPanel topics={flatTopics} />}
         {panel === 'library'    && <ContentLibrary topics={topics} />}
       </main>
@@ -130,11 +133,11 @@ export function AdminShell({ topics, flatTopics, counts }: {
 // ── Overview panel ───────────────────────────────────────────────────────────
 function OverviewPanel({ counts }: { counts: Counts }) {
   const stats = [
-    { label: 'Users',      value: counts[0], icon: '👥', color: 'var(--accent)' },
-    { label: 'Topics',     value: counts[1], icon: '🗂️',  color: '#a78bfa' },
-    { label: 'Questions',  value: counts[2], icon: '📝', color: '#34d399' },
-    { label: 'Flashcards', value: counts[3], icon: '🃏', color: '#f59e0b' },
-    { label: 'Lessons',    value: counts[4], icon: '📖', color: '#f472b6' },
+    { label: 'Users',      value: counts[0], icon: '👥', cls: 'adm-stat-value--accent' },
+    { label: 'Topics',     value: counts[1], icon: '🗂️',  cls: 'adm-stat-value--purple' },
+    { label: 'Questions',  value: counts[2], icon: '📝', cls: 'adm-stat-value--green'  },
+    { label: 'Flashcards', value: counts[3], icon: '🃏', cls: 'adm-stat-value--amber'  },
+    { label: 'Lessons',    value: counts[4], icon: '📖', cls: 'adm-stat-value--pink'   },
   ];
   return (
     <div className="adm-panel">
@@ -147,7 +150,7 @@ function OverviewPanel({ counts }: { counts: Counts }) {
         {stats.map(s => (
           <div key={s.label} className="adm-stat-card">
             <div className="adm-stat-icon">{s.icon}</div>
-            <div className="adm-stat-value" style={{ color: s.color }}>{s.value}</div>
+            <div className={`adm-stat-value ${s.cls}`}>{s.value}</div>
             <div className="adm-stat-label">{s.label}</div>
           </div>
         ))}

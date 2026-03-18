@@ -8,16 +8,67 @@ import { requireAdmin } from '@/lib/auth';
 const topicSchema        = z.object({ kind: z.literal('topic'), title: z.string().min(3), slug: z.string().min(3), system: z.string().min(2), summary: z.string().min(10), difficulty: z.coerce.number().min(1).max(5), estMinutes: z.coerce.number().min(5).max(300), highYield: z.coerce.boolean().optional() });
 const topicEditSchema    = z.object({ id: z.string().min(1), title: z.string().min(3), slug: z.string().min(3), system: z.string().min(2), summary: z.string().min(10), difficulty: z.coerce.number().min(1).max(5), estMinutes: z.coerce.number().min(5).max(300), highYield: z.coerce.boolean().optional() });
 const lessonSchema       = z.object({ kind: z.literal('lesson'), topicId: z.string().min(1), title: z.string().min(3), content: z.string().min(10), pearls: z.string().min(3), pitfalls: z.string().min(3) });
+const lessonEditSchema   = z.object({ kind: z.literal('lesson'), id: z.string().min(1), title: z.string().min(3), content: z.string().min(10), pearls: z.string().min(3), pitfalls: z.string().min(3) });
 const flashcardSchema    = z.object({ kind: z.literal('flashcard'), topicId: z.string().min(1), front: z.string().min(3), back: z.string().min(3), note: z.string().optional().nullable() });
 const flashcardEditSchema = z.object({ kind: z.literal('flashcard'), id: z.string().min(1), front: z.string().min(3), back: z.string().min(3), note: z.string().optional().nullable() });
 const questionSchema     = z.object({ kind: z.literal('question'), topicId: z.string().min(1), stem: z.string().min(10), explanation: z.string().min(5), difficulty: z.coerce.number().min(1).max(5), optionA: z.string().min(1), optionB: z.string().min(1), optionC: z.string().min(1), optionD: z.string().min(1), correctLabel: z.enum(['A', 'B', 'C', 'D']) });
 const questionEditSchema = z.object({ kind: z.literal('question'), id: z.string().min(1), stem: z.string().min(10), explanation: z.string().min(5), difficulty: z.coerce.number().min(1).max(5), optionA: z.string().min(1), optionB: z.string().min(1), optionC: z.string().min(1), optionD: z.string().min(1), correctLabel: z.enum(['A', 'B', 'C', 'D']) });
-const deleteSchema       = z.object({ kind: z.enum(['topic', 'flashcard', 'question']), id: z.string().min(1) });
+const caseSchema         = z.object({ kind: z.literal('case'), topicId: z.string().min(1), title: z.string().min(3), chiefComplaint: z.string().min(5), findings: z.string().min(5), investigations: z.string().min(5), diagnosis: z.string().min(3), management: z.string().min(5) });
+const caseEditSchema     = z.object({ kind: z.literal('case'), id: z.string().min(1), title: z.string().min(3), chiefComplaint: z.string().min(5), findings: z.string().min(5), investigations: z.string().min(5), diagnosis: z.string().min(3), management: z.string().min(5) });
+const deleteSchema       = z.object({ kind: z.enum(['topic', 'lesson', 'flashcard', 'question', 'case']), id: z.string().min(1) });
 
+// ── GET: list content by type ─────────────────────────────────────────────────
+export async function GET(request: Request) {
+  try {
+    await requireAdmin();
+    const { searchParams } = new URL(request.url);
+    const type = searchParams.get('type');
+
+    if (type === 'lesson') {
+      const rows = await prisma.lesson.findMany({
+        include: { topic: { select: { id: true, title: true } } },
+        orderBy: [{ topic: { title: 'asc' } }, { title: 'asc' }],
+      });
+      return NextResponse.json({ items: rows.map(l => ({ id: l.id, title: l.title, content: l.content, pearls: l.pearls, pitfalls: l.pitfalls, topicId: l.topicId, topicTitle: l.topic.title, createdAt: l.createdAt })) });
+    }
+
+    if (type === 'question') {
+      const rows = await prisma.question.findMany({
+        include: { topic: { select: { id: true, title: true } }, options: true },
+        orderBy: [{ topic: { title: 'asc' } }, { createdAt: 'desc' }],
+      });
+      return NextResponse.json({ items: rows.map(q => ({ id: q.id, stem: q.stem, explanation: q.explanation, difficulty: q.difficulty, correctOptionId: q.correctOptionId, options: q.options, topicId: q.topicId, topicTitle: q.topic.title, createdAt: q.createdAt })) });
+    }
+
+    if (type === 'flashcard') {
+      const rows = await prisma.flashcard.findMany({
+        include: { topic: { select: { id: true, title: true } } },
+        orderBy: [{ topic: { title: 'asc' } }, { createdAt: 'desc' }],
+      });
+      return NextResponse.json({ items: rows.map(f => ({ id: f.id, front: f.front, back: f.back, note: f.note, topicId: f.topicId, topicTitle: f.topic.title, createdAt: f.createdAt })) });
+    }
+
+    if (type === 'case') {
+      const rows = await prisma.caseStudy.findMany({
+        include: { topic: { select: { id: true, title: true } } },
+        orderBy: [{ topic: { title: 'asc' } }, { title: 'asc' }],
+      });
+      return NextResponse.json({ items: rows.map(c => ({ id: c.id, title: c.title, chiefComplaint: c.chiefComplaint, findings: c.findings, investigations: c.investigations, diagnosis: c.diagnosis, management: c.management, topicId: c.topicId, topicTitle: c.topic.title, createdAt: c.createdAt })) });
+    }
+
+    return NextResponse.json({ message: 'Invalid type.' }, { status: 400 });
+  } catch (error) {
+    const status = String(error).includes('FORBIDDEN') ? 403 : 400;
+    return NextResponse.json({ message: 'Fetch failed.', error: String(error) }, { status });
+  }
+}
+
+// ── POST: create content ──────────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
     await requireAdmin();
     const body = await request.json();
+
     if (body.kind === 'topic') {
       const p = topicSchema.parse(body);
       await prisma.topic.create({ data: { title: p.title, slug: p.slug, system: p.system, summary: p.summary, difficulty: p.difficulty, estMinutes: p.estMinutes, highYield: p.highYield ?? false } });
@@ -51,6 +102,11 @@ export async function POST(request: Request) {
       if (correct) await prisma.question.update({ where: { id: created.id }, data: { correctOptionId: correct.id } });
       return NextResponse.json({ message: 'Question created.' });
     }
+    if (body.kind === 'case') {
+      const p = caseSchema.parse(body);
+      await prisma.caseStudy.create({ data: { topicId: p.topicId, title: p.title, chiefComplaint: p.chiefComplaint, findings: p.findings, investigations: p.investigations, diagnosis: p.diagnosis, management: p.management } });
+      return NextResponse.json({ message: `Case "${p.title}" created.` });
+    }
     return NextResponse.json({ message: 'Unsupported kind.' }, { status: 400 });
   } catch (error) {
     const status = String(error).includes('FORBIDDEN') ? 403 : 400;
@@ -58,10 +114,17 @@ export async function POST(request: Request) {
   }
 }
 
+// ── PATCH: edit content ───────────────────────────────────────────────────────
 export async function PATCH(request: Request) {
   try {
     await requireAdmin();
     const body = await request.json();
+
+    if (body.kind === 'lesson') {
+      const p = lessonEditSchema.parse(body);
+      await prisma.lesson.update({ where: { id: p.id }, data: { title: p.title, content: p.content, pearls: p.pearls, pitfalls: p.pitfalls } });
+      return NextResponse.json({ message: 'Lesson updated.' });
+    }
 
     if (body.kind === 'flashcard') {
       const p = flashcardEditSchema.parse(body);
@@ -75,27 +138,24 @@ export async function PATCH(request: Request) {
       if (!question) return NextResponse.json({ message: 'Question not found.' }, { status: 404 });
 
       const optionTexts: Record<string, string> = { A: p.optionA, B: p.optionB, C: p.optionC, D: p.optionD };
-      await prisma.question.update({
-        where: { id: p.id },
-        data: { stem: p.stem, explanation: p.explanation, difficulty: p.difficulty },
-      });
+      await prisma.question.update({ where: { id: p.id }, data: { stem: p.stem, explanation: p.explanation, difficulty: p.difficulty } });
       for (const opt of question.options) {
-        await prisma.questionOption.update({
-          where: { id: opt.id },
-          data: { text: optionTexts[opt.label], isCorrect: opt.label === p.correctLabel },
-        });
+        await prisma.questionOption.update({ where: { id: opt.id }, data: { text: optionTexts[opt.label], isCorrect: opt.label === p.correctLabel } });
       }
       const correctOpt = question.options.find(o => o.label === p.correctLabel);
       if (correctOpt) await prisma.question.update({ where: { id: p.id }, data: { correctOptionId: correctOpt.id } });
       return NextResponse.json({ message: 'Question updated.' });
     }
 
+    if (body.kind === 'case') {
+      const p = caseEditSchema.parse(body);
+      await prisma.caseStudy.update({ where: { id: p.id }, data: { title: p.title, chiefComplaint: p.chiefComplaint, findings: p.findings, investigations: p.investigations, diagnosis: p.diagnosis, management: p.management } });
+      return NextResponse.json({ message: 'Case updated.' });
+    }
+
     // Topic edit (no kind field — legacy path)
     const p = topicEditSchema.parse(body);
-    await prisma.topic.update({
-      where: { id: p.id },
-      data: { title: p.title, slug: p.slug, system: p.system, summary: p.summary, difficulty: p.difficulty, estMinutes: p.estMinutes, highYield: p.highYield ?? false },
-    });
+    await prisma.topic.update({ where: { id: p.id }, data: { title: p.title, slug: p.slug, system: p.system, summary: p.summary, difficulty: p.difficulty, estMinutes: p.estMinutes, highYield: p.highYield ?? false } });
     return NextResponse.json({ message: `Topic "${p.title}" updated.` });
   } catch (error) {
     const status = String(error).includes('FORBIDDEN') ? 403 : 400;
@@ -103,14 +163,17 @@ export async function PATCH(request: Request) {
   }
 }
 
+// ── DELETE: remove content ────────────────────────────────────────────────────
 export async function DELETE(request: Request) {
   try {
     await requireAdmin();
     const body = await request.json();
     const p = deleteSchema.parse(body);
     if (p.kind === 'topic')     await prisma.topic.delete({ where: { id: p.id } });
+    if (p.kind === 'lesson')    await prisma.lesson.delete({ where: { id: p.id } });
     if (p.kind === 'flashcard') await prisma.flashcard.delete({ where: { id: p.id } });
     if (p.kind === 'question')  await prisma.question.delete({ where: { id: p.id } });
+    if (p.kind === 'case')      await prisma.caseStudy.delete({ where: { id: p.id } });
     return NextResponse.json({ message: `${p.kind.charAt(0).toUpperCase() + p.kind.slice(1)} deleted.` });
   } catch (error) {
     const status = String(error).includes('FORBIDDEN') ? 403 : 400;
