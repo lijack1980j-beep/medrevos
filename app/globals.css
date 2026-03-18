@@ -1240,6 +1240,11 @@ textarea:focus, input:focus, select:focus {
 .admin-edit-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .admin-edit-footer { display: flex; align-items: center; gap: 14px; }
 .admin-checkbox-label { display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.admin-topic-count { font-size: 13px; font-weight: 400; color: var(--muted); }
+.admin-topic-toolbar { display: flex; gap: 8px; align-items: center; }
+.admin-topic-search { max-width: 200px; padding: 6px 12px; font-size: 13px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; color: var(--text); }
+.admin-topic-search:focus { outline: none; border-color: var(--accent); }
+.admin-hy-badge { margin-left: 6px; font-size: 11px; }
 
 /* Analytics page */
 .analytics-page { display: flex; flex-direction: column; gap: 24px; }

@@ -41,8 +41,8 @@ const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = 
   { id: 'questions',  label: 'Questions',       icon: '📝', group: 'Content' },
   { id: 'flashcards', label: 'Flashcards',      icon: '🃏', group: 'Content' },
   { id: 'cases',      label: 'Cases',           icon: '🩺', group: 'Content' },
-  { id: 'ai',         label: 'AI Generator',    icon: '🤖' },
-  { id: 'library',    label: 'Content Library', icon: '📚' },
+  { id: 'ai',         label: 'AI Generator',    icon: '🤖', group: 'Tools' },
+  { id: 'library',    label: 'Content Library', icon: '📚', group: 'Tools' },
 ];
 
 // Sidebar active: user-content sub-panel highlights "users"
@@ -76,6 +76,7 @@ export function AdminShell({ topics, flatTopics, counts }: {
   const [panel,            setPanel]            = useState<PanelId>('overview');
   const [collapsed,        setCollapsed]        = useState(false);
   const [contentOpen,      setContentOpen]      = useState(true);
+  const [toolsOpen,        setToolsOpen]        = useState(true);
   const [selectedUserId,   setSelectedUserId]   = useState('');
   const [selectedUserName, setSelectedUserName] = useState('');
   const [cmRefreshKey,     setCmRefreshKey]     = useState(0);
@@ -102,31 +103,38 @@ export function AdminShell({ topics, flatTopics, counts }: {
 
         <nav className="adm-sidebar-nav">
           {(() => {
+            const groupState: Record<string, [boolean, () => void]> = {
+              'Content': [contentOpen, () => setContentOpen(o => !o)],
+              'Tools':   [toolsOpen,   () => setToolsOpen(o => !o)],
+            };
+            const groupIcons: Record<string, string> = { Content: '📚', Tools: '🔧' };
             const items: React.ReactNode[] = [];
             let lastGroup: string | undefined;
 
             for (const item of SIDEBAR) {
               if (item.group && item.group !== lastGroup) {
                 lastGroup = item.group;
+                const [open, toggle] = groupState[item.group] ?? [true, () => {}];
                 items.push(
                   <button
                     key={`group-${item.group}`}
                     type="button"
                     className="adm-sidebar-group"
-                    onClick={() => setContentOpen(o => !o)}
+                    onClick={toggle}
                     title={item.group}
                   >
-                    <span className="adm-sidebar-group-icon">📚</span>
+                    <span className="adm-sidebar-group-icon">{groupIcons[item.group] ?? '📁'}</span>
                     {!collapsed && (
                       <>
                         <span className="adm-sidebar-group-label">{item.group}</span>
-                        <span className="adm-sidebar-group-chevron">{contentOpen ? '▾' : '▸'}</span>
+                        <span className="adm-sidebar-group-chevron">{open ? '▾' : '▸'}</span>
                       </>
                     )}
                   </button>
                 );
               }
-              if (item.group && !contentOpen) continue;
+              const [groupOpen] = item.group ? (groupState[item.group] ?? [true]) : [true];
+              if (item.group && !groupOpen) continue;
               items.push(
                 <button
                   key={item.id}
@@ -166,9 +174,9 @@ export function AdminShell({ topics, flatTopics, counts }: {
           <ContentPanel
             kicker="Content"
             title="Topics"
-            description="Topics organise all lessons, questions, flashcards and cases. Create a topic first, then add content under it."
+            description="Global topics are visible to all students. Create a topic here first, then add lessons, questions, flashcards and cases under it."
           >
-            <AdminForms topics={flatTopics} activeForm="topic" />
+            <AdminForms topics={flatTopics} activeForm="topic" onSaved={() => setCmRefreshKey(k => k + 1)} />
           </ContentPanel>
         )}
 
