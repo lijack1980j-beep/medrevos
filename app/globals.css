@@ -2782,7 +2782,7 @@ textarea:focus, input:focus, select:focus {
 /* ─────────────────────────────────────────────────────────────────
    GLITCH SIGNAL FOOTER  (gsf-*)
 ───────────────────────────────────────────────────────────────── */
-.gsf-wrapper { width: 100%; padding: 0 24px 0; margin-top: 0; background: #000; }
+.gsf-wrapper { width: 100%; padding: 0 24px 0; margin-top: 0; background: #000; border-radius: 24px 24px 0 0; overflow: hidden; }
 .gsf-border  { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 48px; padding-bottom: 0; position: relative; }
 [data-theme="light"] .gsf-wrapper { background: #0a0a0a; }
 

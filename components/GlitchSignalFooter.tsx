@@ -73,7 +73,7 @@ export function GlitchSignalFooter() {
               onMouseEnter={() => setIconHover(true)}
               onMouseLeave={() => setIconHover(false)}
               aria-label="Instagram"
-              onClick={() => window.open('https://instagram.com', '_blank')}
+              onClick={() => window.open('https://www.instagram.com/meds.el_hirech/', '_blank')}
             >
               <InstagramIcon />
             </button>
