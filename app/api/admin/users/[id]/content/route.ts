@@ -21,6 +21,11 @@ const deleteSchema = z.object({
   id:   z.string().min(1),
 });
 
+const patchSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('assign-topic'),   topicId: z.string().min(1) }),
+  z.object({ kind: z.literal('unassign-topic'), topicId: z.string().min(1) }),
+]);
+
 // ── GET: user's topics, exam history, calendar ────────────────────────────────
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
@@ -112,5 +117,36 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   } catch (error) {
     const status = String(error).includes('FORBIDDEN') ? 403 : 400;
     return NextResponse.json({ message: 'Delete failed.', error: String(error) }, { status });
+  }
+}
+
+// ── PATCH: assign or unassign a topic to/from this user ───────────────────────
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  try {
+    await requireAdmin();
+    const body = await request.json();
+    const p    = patchSchema.parse(body);
+
+    if (p.kind === 'assign-topic') {
+      // Verify topic exists and is currently global (assignedToUserId null)
+      const topic = await prisma.topic.findFirst({ where: { id: p.topicId, assignedToUserId: null } });
+      if (!topic) return NextResponse.json({ message: 'Topic not found or already assigned.' }, { status: 404 });
+      await prisma.topic.update({ where: { id: p.topicId }, data: { assignedToUserId: params.id } });
+      return NextResponse.json({ message: `Topic "${topic.title}" assigned to user.` });
+    }
+
+    if (p.kind === 'unassign-topic') {
+      // Make the topic global again (visible to all)
+      await prisma.topic.updateMany({
+        where: { id: p.topicId, assignedToUserId: params.id },
+        data: { assignedToUserId: null },
+      });
+      return NextResponse.json({ message: 'Topic unassigned — now visible to all students.' });
+    }
+
+    return NextResponse.json({ message: 'Unsupported kind.' }, { status: 400 });
+  } catch (error) {
+    const status = String(error).includes('FORBIDDEN') ? 403 : 400;
+    return NextResponse.json({ message: 'Patch failed.', error: String(error) }, { status });
   }
 }

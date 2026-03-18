@@ -16,7 +16,20 @@ type ExamSession = {
   status: string; timeLimitSec: number; totalCount: number; correctCount: number;
 };
 type CalEvent = { id: string; type: string; title: string; dateStr: string; note: string | null };
-type ContentItem = { id: string; title?: string; stem?: string; front?: string; chiefComplaint?: string };
+type ContentItem = {
+  id: string; topicId: string;
+  // lesson
+  title?: string; content?: string; pearls?: string; pitfalls?: string;
+  // question
+  stem?: string; explanation?: string; difficulty?: number;
+  options?: { id: string; label: string; text: string; isCorrect: boolean }[];
+  // flashcard
+  front?: string; back?: string; note?: string | null;
+  // case
+  chiefComplaint?: string; findings?: string; investigations?: string;
+  diagnosis?: string; management?: string;
+};
+type GlobalTopic = { id: string; title: string; system: string };
 
 const CONTENT_TABS: ContentTab[] = ['lesson', 'question', 'flashcard', 'case'];
 const CONTENT_LABELS: Record<ContentTab, string> = { lesson: 'Lessons', question: 'Questions', flashcard: 'Flashcards', case: 'Cases' };
@@ -36,9 +49,15 @@ export function UserContentPanel({
   const [contentItems,    setContentItems]    = useState<ContentItem[]>([]);
   const [contentLoading,  setContentLoading]  = useState(false);
 
-  const [showAddTopic, setShowAddTopic] = useState(false);
-  const [showAddContent, setShowAddContent] = useState(false);
+  const [showAddTopic,    setShowAddTopic]    = useState(false);
+  const [showAssignTopic, setShowAssignTopic] = useState(false);
+  const [showAddContent,  setShowAddContent]  = useState(false);
+  const [editingItemId,   setEditingItemId]   = useState<string | null>(null);
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  // Global topics for "assign existing" dropdown
+  const [globalTopics, setGlobalTopics] = useState<GlobalTopic[]>([]);
+  const [assignLoading, setAssignLoading] = useState(false);
 
   // ── Load user data ────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -68,7 +87,30 @@ export function UserContentPanel({
 
   function toggleTopic(id: string) {
     if (expandedTopic === id) { setExpandedTopic(null); }
-    else { setExpandedTopic(id); setContentTab('lesson'); setShowAddContent(false); }
+    else { setExpandedTopic(id); setContentTab('lesson'); setShowAddContent(false); setEditingItemId(null); }
+  }
+
+  // ── Load global topics for assignment ──────────────────────────────────────
+  async function openAssignTopic() {
+    if (showAssignTopic) { setShowAssignTopic(false); return; }
+    setAssignLoading(true);
+    setShowAssignTopic(true);
+    const res  = await fetch('/api/admin/users/global-topics');
+    const data = await res.json();
+    setGlobalTopics(data.topics ?? []);
+    setAssignLoading(false);
+  }
+
+  async function handleAssignTopic(topicId: string) {
+    setStatus(null);
+    const res  = await fetch(`/api/admin/users/${userId}/content`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'assign-topic', topicId }),
+    });
+    const data = await res.json();
+    setStatus({ ok: res.ok, msg: data.message ?? 'Done.' });
+    if (res.ok) { setShowAssignTopic(false); load(); router.refresh(); }
   }
 
   // ── Topic CRUD ────────────────────────────────────────────────────────────
@@ -96,6 +138,18 @@ export function UserContentPanel({
     if (res.ok) { if (expandedTopic === topicId) setExpandedTopic(null); load(); router.refresh(); }
   }
 
+  async function handleUnassignTopic(topicId: string) {
+    if (!confirm('Unassign this topic? It will become visible to all students.')) return;
+    const res = await fetch(`/api/admin/users/${userId}/content`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'unassign-topic', topicId }),
+    });
+    const data = await res.json();
+    setStatus({ ok: res.ok, msg: data.message ?? 'Unassigned.' });
+    if (res.ok) { if (expandedTopic === topicId) setExpandedTopic(null); load(); router.refresh(); }
+  }
+
   // ── Content item CRUD ─────────────────────────────────────────────────────
   async function handleCreateContent(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -110,12 +164,40 @@ export function UserContentPanel({
     if (res.ok) { (e.target as HTMLFormElement).reset(); setShowAddContent(false); loadContent(); load(); router.refresh(); }
   }
 
+  async function handleEditContent(e: React.FormEvent<HTMLFormElement>, id: string) {
+    e.preventDefault();
+    setStatus(null);
+    const fd      = new FormData(e.currentTarget);
+    const entries = Object.fromEntries(fd.entries());
+    const body    = { kind: contentTab, id, ...entries };
+    const res     = await fetch('/api/admin/content', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    setStatus({ ok: res.ok, msg: data.message ?? 'Updated.' });
+    if (res.ok) { setEditingItemId(null); loadContent(); router.refresh(); }
+  }
+
   async function handleDeleteContent(id: string) {
     const res = await fetch('/api/admin/content', {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kind: contentTab, id }),
     });
     if (res.ok) { loadContent(); load(); router.refresh(); }
+  }
+
+  // ── Export / download ─────────────────────────────────────────────────────
+  async function handleExport() {
+    const res  = await fetch(`/api/admin/users/${userId}/export`);
+    if (!res.ok) { setStatus({ ok: false, msg: 'Export failed.' }); return; }
+    const data = await res.json();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${userName.replace(/\s+/g, '_')}_content.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ── Exam + Calendar CRUD ──────────────────────────────────────────────────
@@ -136,7 +218,7 @@ export function UserContentPanel({
     if (res.ok) load();
   }
 
-  // ── Add content forms ─────────────────────────────────────────────────────
+  // ── Add content form ─────────────────────────────────────────────────────
   function renderAddContentForm() {
     const btnLabel = `Add ${CONTENT_LABELS[contentTab].slice(0, -1).toLowerCase()}`;
     if (contentTab === 'lesson') return (
@@ -185,6 +267,77 @@ export function UserContentPanel({
     return null;
   }
 
+  // ── Edit content form ─────────────────────────────────────────────────────
+  function renderEditContentForm(item: ContentItem) {
+    if (contentTab === 'lesson') {
+      return (
+        <form className="uc-edit-form" onSubmit={e => handleEditContent(e, item.id)}>
+          <label>Title<input name="title" defaultValue={item.title ?? ''} required /></label>
+          <label>Content<textarea name="content" rows={4} defaultValue={item.content ?? ''} required /></label>
+          <label>Pearls<textarea name="pearls" rows={2} defaultValue={item.pearls ?? ''} required /></label>
+          <label>Pitfalls<textarea name="pitfalls" rows={2} defaultValue={item.pitfalls ?? ''} required /></label>
+          <div className="uc-edit-footer">
+            <button type="submit" className="btn primary">Save</button>
+            <button type="button" className="btn secondary" onClick={() => setEditingItemId(null)}>Cancel</button>
+          </div>
+        </form>
+      );
+    }
+    if (contentTab === 'flashcard') {
+      return (
+        <form className="uc-edit-form" onSubmit={e => handleEditContent(e, item.id)}>
+          <label>Front<textarea name="front" rows={2} defaultValue={item.front ?? ''} required /></label>
+          <label>Back<textarea name="back" rows={2} defaultValue={item.back ?? ''} required /></label>
+          <label>Note<input name="note" defaultValue={item.note ?? ''} /></label>
+          <div className="uc-edit-footer">
+            <button type="submit" className="btn primary">Save</button>
+            <button type="button" className="btn secondary" onClick={() => setEditingItemId(null)}>Cancel</button>
+          </div>
+        </form>
+      );
+    }
+    if (contentTab === 'question') {
+      const optMap: Record<string, string> = {};
+      for (const o of item.options ?? []) optMap[o.label] = o.text;
+      const correctLabel = item.options?.find(o => o.isCorrect)?.label ?? 'A';
+      return (
+        <form className="uc-edit-form" onSubmit={e => handleEditContent(e, item.id)}>
+          <label>Stem<textarea name="stem" rows={3} defaultValue={item.stem ?? ''} required /></label>
+          <label>Explanation<textarea name="explanation" rows={2} defaultValue={item.explanation ?? ''} required /></label>
+          <div className="uc-add-grid">
+            <label>Difficulty<input type="number" name="difficulty" min="1" max="5" defaultValue={item.difficulty ?? 3} required /></label>
+            <label>Option A<input name="optionA" defaultValue={optMap['A'] ?? ''} required /></label>
+            <label>Option B<input name="optionB" defaultValue={optMap['B'] ?? ''} required /></label>
+            <label>Option C<input name="optionC" defaultValue={optMap['C'] ?? ''} required /></label>
+            <label>Option D<input name="optionD" defaultValue={optMap['D'] ?? ''} required /></label>
+            <label>Correct<select name="correctLabel" defaultValue={correctLabel}><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
+          </div>
+          <div className="uc-edit-footer">
+            <button type="submit" className="btn primary">Save</button>
+            <button type="button" className="btn secondary" onClick={() => setEditingItemId(null)}>Cancel</button>
+          </div>
+        </form>
+      );
+    }
+    if (contentTab === 'case') {
+      return (
+        <form className="uc-edit-form" onSubmit={e => handleEditContent(e, item.id)}>
+          <label>Title<input name="title" defaultValue={item.title ?? ''} required /></label>
+          <label>Chief complaint<textarea name="chiefComplaint" rows={2} defaultValue={item.chiefComplaint ?? ''} required /></label>
+          <label>Findings<textarea name="findings" rows={2} defaultValue={item.findings ?? ''} required /></label>
+          <label>Investigations<textarea name="investigations" rows={2} defaultValue={item.investigations ?? ''} required /></label>
+          <label>Diagnosis<textarea name="diagnosis" rows={2} defaultValue={item.diagnosis ?? ''} required /></label>
+          <label>Management<textarea name="management" rows={2} defaultValue={item.management ?? ''} required /></label>
+          <div className="uc-edit-footer">
+            <button type="submit" className="btn primary">Save</button>
+            <button type="button" className="btn secondary" onClick={() => setEditingItemId(null)}>Cancel</button>
+          </div>
+        </form>
+      );
+    }
+    return null;
+  }
+
   function getItemLabel(item: ContentItem) {
     if (contentTab === 'lesson' || contentTab === 'case') return (item.title ?? 'Untitled').slice(0, 80);
     if (contentTab === 'question') return (item.stem ?? '').slice(0, 90) + ((item.stem?.length ?? 0) > 90 ? '…' : '');
@@ -207,10 +360,13 @@ export function UserContentPanel({
       {/* ── Header ── */}
       <div className="uc-panel-header">
         <button type="button" className="btn secondary" onClick={onBack}>← Back to Users</button>
-        <div>
+        <div className="uc-panel-title">
           <div className="kicker">Per-user content</div>
           <h2>{userName}</h2>
         </div>
+        <button type="button" className="btn secondary uc-export-btn" onClick={handleExport} title="Download all content as JSON">
+          ⬇ Export
+        </button>
       </div>
 
       {/* ── Main tabs ── */}
@@ -238,14 +394,53 @@ export function UserContentPanel({
             <div className="uc-section">
               <div className="uc-section-hdr">
                 <h3>Topics <span className="muted">({topics.length})</span></h3>
-                <button type="button"
-                  className={`btn${showAddTopic ? ' secondary' : ' primary'}`}
-                  onClick={() => setShowAddTopic(v => !v)}
-                >
-                  {showAddTopic ? 'Cancel' : '+ New topic'}
-                </button>
+                <div className="uc-section-hdr-btns">
+                  <button type="button"
+                    className={`btn${showAddTopic ? ' secondary' : ''}`}
+                    onClick={() => { setShowAddTopic(v => !v); setShowAssignTopic(false); }}
+                  >
+                    {showAddTopic ? 'Cancel' : '+ New topic'}
+                  </button>
+                  <button type="button"
+                    className={`btn secondary${showAssignTopic ? ' uc-btn-active' : ''}`}
+                    onClick={openAssignTopic}
+                    title="Assign an existing global topic to this student"
+                  >
+                    {showAssignTopic ? 'Cancel' : '⇒ Assign topic'}
+                  </button>
+                </div>
               </div>
 
+              {/* Assign existing global topic */}
+              {showAssignTopic && (
+                <div className="panel uc-assign-panel">
+                  <h4>Assign global topic to {userName}</h4>
+                  <p className="muted" style={{ fontSize: '0.82rem' }}>
+                    This makes the topic exclusive to this student. It will no longer appear for all users.
+                  </p>
+                  {assignLoading ? (
+                    <div className="adm-loading">Loading topics…</div>
+                  ) : globalTopics.length === 0 ? (
+                    <p className="muted">No unassigned global topics available.</p>
+                  ) : (
+                    <div className="uc-global-topic-list">
+                      {globalTopics.map(gt => (
+                        <div key={gt.id} className="uc-global-topic-row">
+                          <div>
+                            <span className="uc-topic-title">{gt.title}</span>
+                            <span className="badge" style={{ marginLeft: '0.5rem' }}>{gt.system}</span>
+                          </div>
+                          <button type="button" className="btn primary" onClick={() => handleAssignTopic(gt.id)}>
+                            Assign to {userName}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Create new topic form */}
               {showAddTopic && (
                 <form className="panel uc-add-topic-form" onSubmit={handleCreateTopic}>
                   <h4>New topic for {userName}</h4>
@@ -262,7 +457,7 @@ export function UserContentPanel({
               )}
 
               {topics.length === 0
-                ? <p className="muted">No topics assigned to this user. Create one above.</p>
+                ? <p className="muted">No topics assigned to this user. Create one above or assign an existing topic.</p>
                 : (
                   <div className="uc-topic-list">
                     {topics.map(topic => {
@@ -281,6 +476,9 @@ export function UserContentPanel({
                               <button type="button" className={`btn${isExp ? ' secondary' : ''}`} onClick={() => toggleTopic(topic.id)}>
                                 {isExp ? 'Collapse' : 'Manage'}
                               </button>
+                              <button type="button" className="btn secondary" onClick={() => handleUnassignTopic(topic.id)} title="Make this topic visible to all students">
+                                Unassign
+                              </button>
                               <button type="button" className="btn btn--danger" onClick={() => handleDeleteTopic(topic.id)}>Delete</button>
                             </div>
                           </div>
@@ -292,7 +490,7 @@ export function UserContentPanel({
                                 {CONTENT_TABS.map(ct => (
                                   <button key={ct} type="button"
                                     className={`uc-ctab${contentTab === ct ? ' uc-ctab--active' : ''}`}
-                                    onClick={() => { setContentTab(ct); setShowAddContent(false); }}
+                                    onClick={() => { setContentTab(ct); setShowAddContent(false); setEditingItemId(null); }}
                                   >
                                     {CONTENT_LABELS[ct]}
                                     <span className="uc-ctab-count">{topicCount(topic, ct)}</span>
@@ -301,7 +499,7 @@ export function UserContentPanel({
                               </div>
 
                               <div className="uc-ctab-toolbar">
-                                <button type="button" className={`btn${showAddContent ? ' secondary' : ''}`} onClick={() => setShowAddContent(v => !v)}>
+                                <button type="button" className={`btn${showAddContent ? ' secondary' : ''}`} onClick={() => { setShowAddContent(v => !v); setEditingItemId(null); }}>
                                   {showAddContent ? 'Cancel' : `+ Add ${CONTENT_LABELS[contentTab].slice(0, -1).toLowerCase()}`}
                                 </button>
                               </div>
@@ -314,12 +512,26 @@ export function UserContentPanel({
                                   ? <p className="muted uc-empty-items">No {CONTENT_LABELS[contentTab].toLowerCase()} yet.</p>
                                   : (
                                     <div className="uc-item-list">
-                                      {contentItems.map(item => (
-                                        <div key={item.id} className="uc-item-row">
-                                          <span className="uc-item-label">{getItemLabel(item)}</span>
-                                          <button type="button" className="btn btn--danger" onClick={() => handleDeleteContent(item.id)}>Delete</button>
-                                        </div>
-                                      ))}
+                                      {contentItems.map(item => {
+                                        const isEditing = editingItemId === item.id;
+                                        return (
+                                          <div key={item.id} className={`uc-item-row${isEditing ? ' uc-item-row--editing' : ''}`}>
+                                            {!isEditing && (
+                                              <span className="uc-item-label">{getItemLabel(item)}</span>
+                                            )}
+                                            <div className="uc-item-actions">
+                                              <button type="button"
+                                                className={`btn${isEditing ? ' secondary' : ''}`}
+                                                onClick={() => { setEditingItemId(isEditing ? null : item.id); setShowAddContent(false); }}
+                                              >
+                                                {isEditing ? 'Cancel' : 'Edit'}
+                                              </button>
+                                              <button type="button" className="btn btn--danger" onClick={() => handleDeleteContent(item.id)}>Delete</button>
+                                            </div>
+                                            {isEditing && renderEditContentForm(item)}
+                                          </div>
+                                        );
+                                      })}
                                     </div>
                                   )
                               }
