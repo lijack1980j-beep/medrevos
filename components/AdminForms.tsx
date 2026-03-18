@@ -9,7 +9,7 @@ type Topic = {
 };
 type FormStatus = { ok: boolean; message: string } | null;
 
-export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm?: 'topic' | 'lesson' | 'flashcard' | 'question' | 'case' }) {
+export function AdminForms({ topics, activeForm, onSaved }: { topics: Topic[]; activeForm?: 'topic' | 'lesson' | 'flashcard' | 'question' | 'case'; onSaved?: () => void }) {
   const router = useRouter();
   const [topicStatus,    setTopicStatus]    = useState<FormStatus>(null);
   const [lessonStatus,   setLessonStatus]   = useState<FormStatus>(null);
@@ -35,7 +35,7 @@ export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm
     const data = await response.json();
     const msg = data.error ? `${data.message}: ${data.error}` : (data.message || 'Saved.');
     setter({ ok: response.ok, message: msg });
-    if (response.ok) { event.currentTarget.reset(); router.refresh(); }
+    if (response.ok) { event.currentTarget.reset(); router.refresh(); onSaved?.(); }
   }
 
   async function submitEdit(event: React.FormEvent<HTMLFormElement>, id: string) {
@@ -52,6 +52,7 @@ export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm
   }
 
   async function deleteTopic(topicId: string) {
+    if (!confirm('Delete this topic and ALL its lessons, questions, flashcards, and cases? This cannot be undone.')) return;
     setDeleteStatus(null);
     const response = await fetch('/api/admin/content', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'topic', id: topicId }) });
     const data = await response.json();

@@ -2,28 +2,40 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
+  const user = await getCurrentUser();
   const q = (searchParams.q ?? '').trim();
+
+  // Only show content from topics visible to this user (global + their private)
+  const topicFilter = user
+    ? { OR: [{ assignedToUserId: null as string | null }, { assignedToUserId: user.id }] }
+    : { assignedToUserId: null as string | null };
 
   const [topics, questions, flashcards, cases] = q.length >= 2 ? await Promise.all([
     prisma.topic.findMany({
-      where: { OR: [{ title: { contains: q } }, { system: { contains: q } }, { summary: { contains: q } }] },
+      where: {
+        AND: [
+          topicFilter,
+          { OR: [{ title: { contains: q } }, { system: { contains: q } }, { summary: { contains: q } }] },
+        ],
+      },
       select: { title: true, slug: true, system: true, summary: true },
       take: 8,
     }),
     prisma.question.findMany({
-      where: { stem: { contains: q } },
+      where: { stem: { contains: q }, topic: topicFilter },
       select: { id: true, stem: true, topic: { select: { title: true, system: true } } },
       take: 8,
     }),
     prisma.flashcard.findMany({
-      where: { OR: [{ front: { contains: q } }, { back: { contains: q } }] },
+      where: { topic: topicFilter, OR: [{ front: { contains: q } }, { back: { contains: q } }] },
       select: { id: true, front: true, back: true, topic: { select: { title: true } } },
       take: 8,
     }),
     prisma.caseStudy.findMany({
-      where: { OR: [{ title: { contains: q } }, { chiefComplaint: { contains: q } }, { diagnosis: { contains: q } }] },
+      where: { topic: topicFilter, OR: [{ title: { contains: q } }, { chiefComplaint: { contains: q } }, { diagnosis: { contains: q } }] },
       select: { id: true, title: true, topic: { select: { title: true, system: true } } },
       take: 6,
     }),

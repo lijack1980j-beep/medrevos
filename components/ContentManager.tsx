@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export type CMType = 'lesson' | 'question' | 'flashcard' | 'case';
 
-interface BaseItem { id: string; topicId: string; topicTitle: string; createdAt: string }
+interface BaseItem { id: string; topicId: string; topicTitle: string; isGlobal: boolean; createdAt: string }
 interface LessonItem    extends BaseItem { title: string; content: string; pearls: string; pitfalls: string }
 interface QuestionItem  extends BaseItem { stem: string; explanation: string; difficulty: number; correctOptionId: string | null; options: { id: string; label: string; text: string; isCorrect: boolean }[] }
 interface FlashcardItem extends BaseItem { front: string; back: string; note: string | null }
@@ -17,7 +17,7 @@ type Status = { ok: boolean; msg: string } | null;
 
 const LABELS: Record<CMType, string> = { lesson: 'Lessons', question: 'Questions', flashcard: 'Flashcards', case: 'Cases' };
 
-export function ContentManager({ type }: { type: CMType }) {
+export function ContentManager({ type, refreshKey, globalOnly }: { type: CMType; refreshKey?: number; globalOnly?: boolean }) {
   const router = useRouter();
   const [items, setItems]         = useState<AnyItem[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -28,13 +28,16 @@ export function ContentManager({ type }: { type: CMType }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res  = await fetch(`/api/admin/content?type=${type}`);
+    const url = `/api/admin/content?type=${type}${globalOnly ? '&globalOnly=true' : ''}`;
+    const res  = await fetch(url);
     const data = await res.json();
     setItems(data.items ?? []);
     setLoading(false);
-  }, [type]);
+  }, [type, globalOnly]);
 
-  useEffect(() => { load(); }, [load]);
+  // Refresh whenever refreshKey changes (triggered by parent after new content is created)
+  useEffect(() => { load(); }, [load, refreshKey]);
+
 
   async function handleDelete(id: string) {
     setStatus(null);
@@ -172,6 +175,7 @@ export function ContentManager({ type }: { type: CMType }) {
                 <div className="cm-item-header">
                   <div className="cm-item-info">
                     <span className="badge">{item.topicTitle}</span>
+                    {!item.isGlobal && <span className="badge badge--warn cm-private-badge" title="Only visible to the assigned student">Private</span>}
                     {renderSummary(item)}
                   </div>
                   <div className="cm-item-actions">

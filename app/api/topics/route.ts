@@ -13,8 +13,14 @@ const topicSchema = z.object({
   estMinutes: z.coerce.number().min(5).max(300)
 });
 
-export async function GET() {
-  const topics = await prisma.topic.findMany({ orderBy: { title: 'asc' } });
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId');
+  // Return only global topics (optionally include user-private ones if userId is provided)
+  const where = userId
+    ? { OR: [{ assignedToUserId: null as string | null }, { assignedToUserId: userId }] }
+    : { assignedToUserId: null as string | null };
+  const topics = await prisma.topic.findMany({ where, orderBy: { title: 'asc' } });
   return NextResponse.json(topics);
 }
 

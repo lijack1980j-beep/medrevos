@@ -78,6 +78,7 @@ export function AdminShell({ topics, flatTopics, counts }: {
   const [contentOpen,      setContentOpen]      = useState(true);
   const [selectedUserId,   setSelectedUserId]   = useState('');
   const [selectedUserName, setSelectedUserName] = useState('');
+  const [cmRefreshKey,     setCmRefreshKey]     = useState(0);
 
   function openUserContent(id: string, name: string) {
     setSelectedUserId(id);
@@ -175,15 +176,15 @@ export function AdminShell({ topics, flatTopics, counts }: {
           <ContentPanel
             kicker="Content"
             title="Lessons"
-            description="Write high-yield study lessons with clinical pearls and pitfalls."
+            description="Write high-yield study lessons with clinical pearls and pitfalls. Lessons appear in the Study page for all students."
           >
             <section className="adm-create-section">
               <h3 className="adm-section-label">Create lesson</h3>
-              <AdminForms topics={flatTopics} activeForm="lesson" />
+              <AdminForms topics={flatTopics} activeForm="lesson" onSaved={() => setCmRefreshKey(k => k + 1)} />
             </section>
             <section className="adm-manage-section">
               <h3 className="adm-section-label">Manage lessons</h3>
-              <ContentManager type="lesson" />
+              <ContentManager type="lesson" refreshKey={cmRefreshKey} globalOnly />
             </section>
           </ContentPanel>
         )}
@@ -192,15 +193,15 @@ export function AdminShell({ topics, flatTopics, counts }: {
           <ContentPanel
             kicker="Content"
             title="Questions"
-            description="Build USMLE-style MCQs with explanations and difficulty ratings."
+            description="Build USMLE-style MCQs with explanations and difficulty ratings. Questions appear in the Q-Bank for all students."
           >
             <section className="adm-create-section">
               <h3 className="adm-section-label">Create question</h3>
-              <AdminForms topics={flatTopics} activeForm="question" />
+              <AdminForms topics={flatTopics} activeForm="question" onSaved={() => setCmRefreshKey(k => k + 1)} />
             </section>
             <section className="adm-manage-section">
               <h3 className="adm-section-label">Manage questions</h3>
-              <ContentManager type="question" />
+              <ContentManager type="question" refreshKey={cmRefreshKey} globalOnly />
             </section>
           </ContentPanel>
         )}
@@ -213,11 +214,11 @@ export function AdminShell({ topics, flatTopics, counts }: {
           >
             <section className="adm-create-section">
               <h3 className="adm-section-label">Create flashcard</h3>
-              <AdminForms topics={flatTopics} activeForm="flashcard" />
+              <AdminForms topics={flatTopics} activeForm="flashcard" onSaved={() => setCmRefreshKey(k => k + 1)} />
             </section>
             <section className="adm-manage-section">
               <h3 className="adm-section-label">Manage flashcards</h3>
-              <ContentManager type="flashcard" />
+              <ContentManager type="flashcard" refreshKey={cmRefreshKey} globalOnly />
             </section>
           </ContentPanel>
         )}
@@ -226,15 +227,15 @@ export function AdminShell({ topics, flatTopics, counts }: {
           <ContentPanel
             kicker="Content"
             title="Cases"
-            description="Add clinical case studies: presentation, investigations, diagnosis and management."
+            description="Add clinical case studies: presentation, investigations, diagnosis and management. Cases appear in the Cases page for all students."
           >
             <section className="adm-create-section">
               <h3 className="adm-section-label">Create case</h3>
-              <AdminForms topics={flatTopics} activeForm="case" />
+              <AdminForms topics={flatTopics} activeForm="case" onSaved={() => setCmRefreshKey(k => k + 1)} />
             </section>
             <section className="adm-manage-section">
               <h3 className="adm-section-label">Manage cases</h3>
-              <ContentManager type="case" />
+              <ContentManager type="case" refreshKey={cmRefreshKey} globalOnly />
             </section>
           </ContentPanel>
         )}

@@ -22,44 +22,47 @@ export async function GET(request: Request) {
   try {
     await requireAdmin();
     const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type');
+    const type       = searchParams.get('type');
+    const topicId    = searchParams.get('topicId') ?? undefined;
+    const globalOnly = searchParams.get('globalOnly') === 'true';
 
-    const topicId = searchParams.get('topicId') ?? undefined;
+    // Build topic filter: optionally restrict to global topics (assignedToUserId: null)
+    const topicFilter = globalOnly ? { assignedToUserId: null as string | null } : {};
 
     if (type === 'lesson') {
       const rows = await prisma.lesson.findMany({
-        where: topicId ? { topicId } : {},
-        include: { topic: { select: { id: true, title: true } } },
+        where: topicId ? { topicId } : (globalOnly ? { topic: topicFilter } : {}),
+        include: { topic: { select: { id: true, title: true, assignedToUserId: true } } },
         orderBy: [{ topic: { title: 'asc' } }, { title: 'asc' }],
       });
-      return NextResponse.json({ items: rows.map(l => ({ id: l.id, title: l.title, content: l.content, pearls: l.pearls, pitfalls: l.pitfalls, topicId: l.topicId, topicTitle: l.topic.title, createdAt: l.createdAt })) });
+      return NextResponse.json({ items: rows.map(l => ({ id: l.id, title: l.title, content: l.content, pearls: l.pearls, pitfalls: l.pitfalls, topicId: l.topicId, topicTitle: l.topic.title, isGlobal: l.topic.assignedToUserId === null, createdAt: l.createdAt })) });
     }
 
     if (type === 'question') {
       const rows = await prisma.question.findMany({
-        where: topicId ? { topicId } : {},
-        include: { topic: { select: { id: true, title: true } }, options: true },
+        where: topicId ? { topicId } : (globalOnly ? { topic: topicFilter } : {}),
+        include: { topic: { select: { id: true, title: true, assignedToUserId: true } }, options: true },
         orderBy: [{ topic: { title: 'asc' } }, { createdAt: 'desc' }],
       });
-      return NextResponse.json({ items: rows.map(q => ({ id: q.id, stem: q.stem, explanation: q.explanation, difficulty: q.difficulty, correctOptionId: q.correctOptionId, options: q.options, topicId: q.topicId, topicTitle: q.topic.title, createdAt: q.createdAt })) });
+      return NextResponse.json({ items: rows.map(q => ({ id: q.id, stem: q.stem, explanation: q.explanation, difficulty: q.difficulty, correctOptionId: q.correctOptionId, options: q.options, topicId: q.topicId, topicTitle: q.topic.title, isGlobal: q.topic.assignedToUserId === null, createdAt: q.createdAt })) });
     }
 
     if (type === 'flashcard') {
       const rows = await prisma.flashcard.findMany({
-        where: topicId ? { topicId } : {},
-        include: { topic: { select: { id: true, title: true } } },
+        where: topicId ? { topicId } : (globalOnly ? { topic: topicFilter } : {}),
+        include: { topic: { select: { id: true, title: true, assignedToUserId: true } } },
         orderBy: [{ topic: { title: 'asc' } }, { createdAt: 'desc' }],
       });
-      return NextResponse.json({ items: rows.map(f => ({ id: f.id, front: f.front, back: f.back, note: f.note, topicId: f.topicId, topicTitle: f.topic.title, createdAt: f.createdAt })) });
+      return NextResponse.json({ items: rows.map(f => ({ id: f.id, front: f.front, back: f.back, note: f.note, topicId: f.topicId, topicTitle: f.topic.title, isGlobal: f.topic.assignedToUserId === null, createdAt: f.createdAt })) });
     }
 
     if (type === 'case') {
       const rows = await prisma.caseStudy.findMany({
-        where: topicId ? { topicId } : {},
-        include: { topic: { select: { id: true, title: true } } },
+        where: topicId ? { topicId } : (globalOnly ? { topic: topicFilter } : {}),
+        include: { topic: { select: { id: true, title: true, assignedToUserId: true } } },
         orderBy: [{ topic: { title: 'asc' } }, { title: 'asc' }],
       });
-      return NextResponse.json({ items: rows.map(c => ({ id: c.id, title: c.title, chiefComplaint: c.chiefComplaint, findings: c.findings, investigations: c.investigations, diagnosis: c.diagnosis, management: c.management, topicId: c.topicId, topicTitle: c.topic.title, createdAt: c.createdAt })) });
+      return NextResponse.json({ items: rows.map(c => ({ id: c.id, title: c.title, chiefComplaint: c.chiefComplaint, findings: c.findings, investigations: c.investigations, diagnosis: c.diagnosis, management: c.management, topicId: c.topicId, topicTitle: c.topic.title, isGlobal: c.topic.assignedToUserId === null, createdAt: c.createdAt })) });
     }
 
     return NextResponse.json({ message: 'Invalid type.' }, { status: 400 });
