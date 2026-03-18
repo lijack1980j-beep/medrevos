@@ -6,6 +6,7 @@ import { TopicCard } from '@/components/TopicCard';
 import { getCurrentUser } from '@/lib/auth';
 import { percent, readinessScore, calculateStreak } from '@/lib/analytics';
 import { OnboardingModal } from '@/components/OnboardingModal';
+import { GlitchSignalFooter } from '@/components/GlitchSignalFooter';
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -133,6 +134,7 @@ export default async function HomePage() {
 
       </div>{/* end home-bg-wrap */}
 
+      <GlitchSignalFooter />
       {user && <OnboardingModal userName={user.name} />}
     </div>
   );

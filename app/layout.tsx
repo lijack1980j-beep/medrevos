@@ -1,9 +1,13 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
+import { Press_Start_2P, Space_Mono } from 'next/font/google';
 import { MainNav } from '@/components/MainNav';
 import { ShortcutModal } from '@/components/ShortcutModal';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
+
+const pressStart2P = Press_Start_2P({ weight: '400', subsets: ['latin'], variable: '--font-press-start', display: 'swap' });
+const spaceMono    = Space_Mono({ weight: ['400', '700'], subsets: ['latin'], variable: '--font-space-mono', display: 'swap' });
 
 export const metadata: Metadata = {
   title: 'Med Revision OS V2',
@@ -22,7 +26,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${pressStart2P.variable} ${spaceMono.variable}`}>
       <body>
         <div className="glow-orb glow-orb-1" />
         <div className="glow-orb glow-orb-2" />
