@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 
 export type CMType = 'lesson' | 'question' | 'flashcard' | 'case';
 
-type Topic = { id: string; title: string };
-
 interface BaseItem { id: string; topicId: string; topicTitle: string; createdAt: string }
 interface LessonItem    extends BaseItem { title: string; content: string; pearls: string; pitfalls: string }
 interface QuestionItem  extends BaseItem { stem: string; explanation: string; difficulty: number; correctOptionId: string | null; options: { id: string; label: string; text: string; isCorrect: boolean }[] }
@@ -19,7 +17,7 @@ type Status = { ok: boolean; msg: string } | null;
 
 const LABELS: Record<CMType, string> = { lesson: 'Lessons', question: 'Questions', flashcard: 'Flashcards', case: 'Cases' };
 
-export function ContentManager({ type, topics }: { type: CMType; topics: Topic[] }) {
+export function ContentManager({ type }: { type: CMType }) {
   const router = useRouter();
   const [items, setItems]         = useState<AnyItem[]>([]);
   const [loading, setLoading]     = useState(true);

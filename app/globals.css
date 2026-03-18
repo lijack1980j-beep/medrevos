@@ -3366,3 +3366,15 @@ textarea:focus, input:focus, select:focus {
 [data-theme="light"] .uc-add-form { background: #fff; border-color: #e5e7eb; }
 [data-theme="light"] .uc-item-row { background: #fff; border-color: #e5e7eb; }
 [data-theme="light"] .uc-data-row { background: #f9fafb; border-color: #e5e7eb; }
+
+/* ── Admin content panel layout ──────────────────────────────────────────── */
+.adm-content-panel { display: flex; flex-direction: column; gap: 0; }
+.adm-create-section { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); }
+.adm-manage-section { padding: 1.25rem 1.5rem; }
+.adm-section-label { font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 0.9rem; }
+
+/* ── Admin user card layout ──────────────────────────────────────────────── */
+.adm-user-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+.adm-user-badges { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+[data-theme="light"] .adm-create-section { border-color: #e5e7eb; }
+[data-theme="light"] .adm-manage-section { border-color: #e5e7eb; }

@@ -93,63 +93,81 @@ export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm
 
         {show('lesson') && <form className="panel" onSubmit={(e) => submitForm(e, 'lesson')}>
           <h3>Create lesson</h3>
-          <div className="list">
-            <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
-            <label>Title<input name="title" required /></label>
-            <label>Content<textarea name="content" rows={5} required /></label>
-            <label>Pearls<textarea name="pearls" rows={3} required /></label>
-            <label>Pitfalls<textarea name="pitfalls" rows={3} required /></label>
-          </div>
-          <button type="submit" className="btn primary admin-form-btn">Save lesson</button>
-          {lessonStatus && <p className={`admin-form-status${lessonStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{lessonStatus.message}</p>}
+          {topics.length === 0 ? (
+            <p className="muted">No topics available. Create a topic first.</p>
+          ) : (
+            <div className="list">
+              <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+              <label>Title<input name="title" required /></label>
+              <label>Content<textarea name="content" rows={5} required /></label>
+              <label>Pearls<textarea name="pearls" rows={3} required /></label>
+              <label>Pitfalls<textarea name="pitfalls" rows={3} required /></label>
+              <button type="submit" className="btn primary admin-form-btn">Save lesson</button>
+              {lessonStatus && <p className={`admin-form-status${lessonStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{lessonStatus.message}</p>}
+            </div>
+          )}
         </form>}
       </div>
 
       <div className="grid cols-2">
         {show('flashcard') && <form className="panel" onSubmit={(e) => submitForm(e, 'flashcard')}>
           <h3>Create flashcard</h3>
-          <div className="list">
-            <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
-            <label>Front<textarea name="front" rows={3} required /></label>
-            <label>Back<textarea name="back" rows={3} required /></label>
-            <label>Note<textarea name="note" rows={2} /></label>
-          </div>
-          <button type="submit" className="btn primary admin-form-btn">Save flashcard</button>
-          {cardStatus && <p className={`admin-form-status${cardStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{cardStatus.message}</p>}
+          {topics.length === 0 ? (
+            <p className="muted">No topics available. Create a topic first.</p>
+          ) : (
+            <div className="list">
+              <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+              <label>Front<textarea name="front" rows={3} required /></label>
+              <label>Back<textarea name="back" rows={3} required /></label>
+              <label>Note<textarea name="note" rows={2} /></label>
+              <button type="submit" className="btn primary admin-form-btn">Save flashcard</button>
+              {cardStatus && <p className={`admin-form-status${cardStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{cardStatus.message}</p>}
+            </div>
+          )}
         </form>}
 
         {show('question') && <form className="panel" onSubmit={(e) => submitForm(e, 'question')}>
           <h3>Create question</h3>
-          <div className="list">
-            <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
-            <label>Stem<textarea name="stem" rows={4} required /></label>
-            <label>Explanation<textarea name="explanation" rows={3} required /></label>
-            <label>Difficulty<input type="number" name="difficulty" min="1" max="5" defaultValue="3" required /></label>
-            <label>Option A<input name="optionA" required /></label>
-            <label>Option B<input name="optionB" required /></label>
-            <label>Option C<input name="optionC" required /></label>
-            <label>Option D<input name="optionD" required /></label>
-            <label>Correct label<select name="correctLabel" defaultValue="A"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
-          </div>
-          <button type="submit" className="btn primary admin-form-btn">Save question</button>
-          {questionStatus && <p className={`admin-form-status${questionStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{questionStatus.message}</p>}
+          {topics.length === 0 ? (
+            <p className="muted">No topics available. Create a topic first.</p>
+          ) : (
+            <div className="list">
+              <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+              <label>Stem<textarea name="stem" rows={4} required /></label>
+              <label>Explanation<textarea name="explanation" rows={3} required /></label>
+              <label>Difficulty<input type="number" name="difficulty" min="1" max="5" defaultValue="3" required /></label>
+              <label>Option A<input name="optionA" required /></label>
+              <label>Option B<input name="optionB" required /></label>
+              <label>Option C<input name="optionC" required /></label>
+              <label>Option D<input name="optionD" required /></label>
+              <label>Correct label<select name="correctLabel" defaultValue="A"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
+              <button type="submit" className="btn primary admin-form-btn">Save question</button>
+              {questionStatus && <p className={`admin-form-status${questionStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{questionStatus.message}</p>}
+            </div>
+          )}
         </form>}
       </div>
 
-      {show('case') && <form className="panel" onSubmit={(e) => submitForm(e, 'case')}>
-        <h3>Create case</h3>
-        <div className="list">
-          <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
-          <label>Title<input name="title" required /></label>
-          <label>Chief complaint<textarea name="chiefComplaint" rows={3} required /></label>
-          <label>Findings<textarea name="findings" rows={4} required /></label>
-          <label>Investigations<textarea name="investigations" rows={4} required /></label>
-          <label>Diagnosis<textarea name="diagnosis" rows={3} required /></label>
-          <label>Management<textarea name="management" rows={4} required /></label>
-        </div>
-        <button type="submit" className="btn primary admin-form-btn">Save case</button>
-        {caseStatus && <p className={`admin-form-status${caseStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{caseStatus.message}</p>}
-      </form>}
+      {show('case') && <div className="grid cols-2">
+        <form className="panel" onSubmit={(e) => submitForm(e, 'case')}>
+          <h3>Create case</h3>
+          {topics.length === 0 ? (
+            <p className="muted">No topics available. Create a topic first.</p>
+          ) : (
+            <div className="list">
+              <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+              <label>Title<input name="title" required /></label>
+              <label>Chief complaint<textarea name="chiefComplaint" rows={3} required /></label>
+              <label>Findings<textarea name="findings" rows={4} required /></label>
+              <label>Investigations<textarea name="investigations" rows={4} required /></label>
+              <label>Diagnosis<textarea name="diagnosis" rows={3} required /></label>
+              <label>Management<textarea name="management" rows={4} required /></label>
+              <button type="submit" className="btn primary admin-form-btn">Save case</button>
+              {caseStatus && <p className={`admin-form-status${caseStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{caseStatus.message}</p>}
+            </div>
+          )}
+        </form>
+      </div>}
 
       {/* Topic management with inline edit — shown in Topics panel or no filter */}
       {show('topic') && <div className="panel">

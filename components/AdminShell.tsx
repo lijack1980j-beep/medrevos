@@ -6,9 +6,9 @@ import { ContentLibrary } from '@/components/ContentLibrary';
 import { AIGeneratorPanel } from '@/components/AIGeneratorPanel';
 import { ContentManager } from '@/components/ContentManager';
 import { UserContentPanel } from '@/components/UserContentPanel';
-import { SECTIONS, type SectionKey } from '@/lib/access';
+import { SECTIONS } from '@/lib/access';
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 type Topic = {
   id: string; title: string; slug: string; system: string;
   summary: string; difficulty: number; estMinutes: number; highYield: boolean;
@@ -27,8 +27,11 @@ type AdminUser = {
 };
 type Counts = [number, number, number, number, number];
 
-// ── Sidebar config ───────────────────────────────────────────────────────────
-type PanelId = 'overview' | 'users' | 'user-content' | 'topics' | 'lessons' | 'questions' | 'flashcards' | 'cases' | 'ai' | 'library';
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+type PanelId =
+  | 'overview' | 'users' | 'user-content'
+  | 'topics' | 'lessons' | 'questions' | 'flashcards' | 'cases'
+  | 'ai' | 'library';
 
 const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = [
   { id: 'overview',   label: 'Overview',        icon: '📊' },
@@ -42,17 +45,45 @@ const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = 
   { id: 'library',    label: 'Content Library', icon: '📚' },
 ];
 
-// ── Main shell ───────────────────────────────────────────────────────────────
+// Sidebar active: user-content sub-panel highlights "users"
+function sidebarActive(current: PanelId, item: PanelId) {
+  if (current === 'user-content') return item === 'users';
+  return current === item;
+}
+
+// ── Content panel wrapper ─────────────────────────────────────────────────────
+function ContentPanel({
+  kicker, title, description, children,
+}: { kicker: string; title: string; description: string; children: React.ReactNode }) {
+  return (
+    <div className="adm-panel adm-content-panel">
+      <div className="adm-panel-header">
+        <div className="kicker">{kicker}</div>
+        <h2>{title}</h2>
+        <p className="muted">{description}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Main shell ────────────────────────────────────────────────────────────────
 export function AdminShell({ topics, flatTopics, counts }: {
   topics: Topic[];
   flatTopics: FlatTopic[];
   counts: Counts;
 }) {
-  const [panel, setPanel]               = useState<PanelId>('overview');
-  const [collapsed, setCollapsed]       = useState(false);
-  const [contentOpen, setContentOpen]   = useState(true);
-  const [selectedUserId,   setSelectedUserId]   = useState<string>('');
-  const [selectedUserName, setSelectedUserName] = useState<string>('');
+  const [panel,            setPanel]            = useState<PanelId>('overview');
+  const [collapsed,        setCollapsed]        = useState(false);
+  const [contentOpen,      setContentOpen]      = useState(true);
+  const [selectedUserId,   setSelectedUserId]   = useState('');
+  const [selectedUserName, setSelectedUserName] = useState('');
+
+  function openUserContent(id: string, name: string) {
+    setSelectedUserId(id);
+    setSelectedUserName(name);
+    setPanel('user-content');
+  }
 
   return (
     <div className={`adm-shell${collapsed ? ' adm-shell--collapsed' : ''}`}>
@@ -74,7 +105,6 @@ export function AdminShell({ topics, flatTopics, counts }: {
             let lastGroup: string | undefined;
 
             for (const item of SIDEBAR) {
-              // Group header for "Content"
               if (item.group && item.group !== lastGroup) {
                 lastGroup = item.group;
                 items.push(
@@ -95,15 +125,12 @@ export function AdminShell({ topics, flatTopics, counts }: {
                   </button>
                 );
               }
-
-              // Skip group children when group is collapsed
               if (item.group && !contentOpen) continue;
-
               items.push(
                 <button
                   key={item.id}
                   type="button"
-                  className={`adm-sidebar-item${panel === item.id ? ' adm-sidebar-item--active' : ''}${item.group ? ' adm-sidebar-item--child' : ''}`}
+                  className={`adm-sidebar-item${sidebarActive(panel, item.id) ? ' adm-sidebar-item--active' : ''}${item.group ? ' adm-sidebar-item--child' : ''}`}
                   onClick={() => setPanel(item.id)}
                   title={item.label}
                 >
@@ -119,22 +146,108 @@ export function AdminShell({ topics, flatTopics, counts }: {
 
       {/* ── Main area ── */}
       <main className="adm-main">
-        {panel === 'overview'      && <OverviewPanel counts={counts} />}
-        {panel === 'users'         && <UsersPanel onManageContent={(id, name) => { setSelectedUserId(id); setSelectedUserName(name); setPanel('user-content'); }} />}
-        {panel === 'user-content'  && <UserContentPanel userId={selectedUserId} userName={selectedUserName} onBack={() => setPanel('users')} />}
-        {panel === 'topics'        && <AdminForms topics={flatTopics} activeForm="topic" />}
-        {panel === 'lessons'       && <><AdminForms topics={flatTopics} activeForm="lesson" /><ContentManager type="lesson" topics={flatTopics} /></>}
-        {panel === 'questions'     && <><AdminForms topics={flatTopics} activeForm="question" /><ContentManager type="question" topics={flatTopics} /></>}
-        {panel === 'flashcards'    && <><AdminForms topics={flatTopics} activeForm="flashcard" /><ContentManager type="flashcard" topics={flatTopics} /></>}
-        {panel === 'cases'         && <><AdminForms topics={flatTopics} activeForm="case" /><ContentManager type="case" topics={flatTopics} /></>}
-        {panel === 'ai'            && <AIGeneratorPanel topics={flatTopics} />}
-        {panel === 'library'       && <ContentLibrary topics={topics} />}
+
+        {panel === 'overview' && <OverviewPanel counts={counts} />}
+
+        {panel === 'users' && (
+          <UsersPanel onManageContent={openUserContent} />
+        )}
+
+        {panel === 'user-content' && (
+          <UserContentPanel
+            userId={selectedUserId}
+            userName={selectedUserName}
+            onBack={() => setPanel('users')}
+          />
+        )}
+
+        {panel === 'topics' && (
+          <ContentPanel
+            kicker="Content"
+            title="Topics"
+            description="Topics organise all lessons, questions, flashcards and cases. Create a topic first, then add content under it."
+          >
+            <AdminForms topics={flatTopics} activeForm="topic" />
+          </ContentPanel>
+        )}
+
+        {panel === 'lessons' && (
+          <ContentPanel
+            kicker="Content"
+            title="Lessons"
+            description="Write high-yield study lessons with clinical pearls and pitfalls."
+          >
+            <section className="adm-create-section">
+              <h3 className="adm-section-label">Create lesson</h3>
+              <AdminForms topics={flatTopics} activeForm="lesson" />
+            </section>
+            <section className="adm-manage-section">
+              <h3 className="adm-section-label">Manage lessons</h3>
+              <ContentManager type="lesson" />
+            </section>
+          </ContentPanel>
+        )}
+
+        {panel === 'questions' && (
+          <ContentPanel
+            kicker="Content"
+            title="Questions"
+            description="Build USMLE-style MCQs with explanations and difficulty ratings."
+          >
+            <section className="adm-create-section">
+              <h3 className="adm-section-label">Create question</h3>
+              <AdminForms topics={flatTopics} activeForm="question" />
+            </section>
+            <section className="adm-manage-section">
+              <h3 className="adm-section-label">Manage questions</h3>
+              <ContentManager type="question" />
+            </section>
+          </ContentPanel>
+        )}
+
+        {panel === 'flashcards' && (
+          <ContentPanel
+            kicker="Content"
+            title="Flashcards"
+            description="Create spaced-repetition flashcards. Students review them in their SRS queue."
+          >
+            <section className="adm-create-section">
+              <h3 className="adm-section-label">Create flashcard</h3>
+              <AdminForms topics={flatTopics} activeForm="flashcard" />
+            </section>
+            <section className="adm-manage-section">
+              <h3 className="adm-section-label">Manage flashcards</h3>
+              <ContentManager type="flashcard" />
+            </section>
+          </ContentPanel>
+        )}
+
+        {panel === 'cases' && (
+          <ContentPanel
+            kicker="Content"
+            title="Cases"
+            description="Add clinical case studies: presentation, investigations, diagnosis and management."
+          >
+            <section className="adm-create-section">
+              <h3 className="adm-section-label">Create case</h3>
+              <AdminForms topics={flatTopics} activeForm="case" />
+            </section>
+            <section className="adm-manage-section">
+              <h3 className="adm-section-label">Manage cases</h3>
+              <ContentManager type="case" />
+            </section>
+          </ContentPanel>
+        )}
+
+        {panel === 'ai'      && <AIGeneratorPanel topics={flatTopics} />}
+        {panel === 'library' && <ContentLibrary topics={topics} />}
+
       </main>
     </div>
   );
 }
 
-// ── Overview panel ───────────────────────────────────────────────────────────
+// ── Overview panel ────────────────────────────────────────────────────────────
 function OverviewPanel({ counts }: { counts: Counts }) {
   const stats = [
     { label: 'Users',      value: counts[0], icon: '👥', cls: 'adm-stat-value--accent' },
@@ -163,15 +276,15 @@ function OverviewPanel({ counts }: { counts: Counts }) {
   );
 }
 
-// ── Users panel ──────────────────────────────────────────────────────────────
+// ── Users panel ───────────────────────────────────────────────────────────────
 function UsersPanel({ onManageContent }: { onManageContent: (id: string, name: string) => void }) {
-  const [users, setUsers]   = useState<AdminUser[]>([]);
+  const [users,   setUsers]   = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch]   = useState('');
+  const [search,  setSearch]  = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
-    const res = await fetch('/api/admin/users');
+    const res  = await fetch('/api/admin/users');
     const data = await res.json();
     setUsers(data.users ?? []);
     setLoading(false);
@@ -183,7 +296,6 @@ function UsersPanel({ onManageContent }: { onManageContent: (id: string, name: s
     const next = blocked.includes(section)
       ? blocked.filter(s => s !== section)
       : [...blocked, section];
-    // Optimistic
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, blockedSections: next } : u));
     await fetch(`/api/admin/users/${userId}`, {
       method: 'PATCH',
@@ -212,7 +324,7 @@ function UsersPanel({ onManageContent }: { onManageContent: (id: string, name: s
       <div className="adm-panel-header">
         <div className="kicker">Management</div>
         <h2>Users</h2>
-        <p className="muted">Control each student's section access and roles. Blocked sections hide from their navigation instantly.</p>
+        <p className="muted">Control section access, roles, and per-user content for each student.</p>
       </div>
 
       <div className="adm-users-toolbar">
@@ -226,7 +338,6 @@ function UsersPanel({ onManageContent }: { onManageContent: (id: string, name: s
         <span className="muted adm-users-count">{filtered.length} user{filtered.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Section access legend */}
       <div className="adm-section-legend">
         {SECTIONS.map(s => (
           <span key={s.key} className="adm-section-legend-item" title={s.label}>
@@ -237,59 +348,58 @@ function UsersPanel({ onManageContent }: { onManageContent: (id: string, name: s
 
       {loading ? (
         <div className="adm-loading">Loading users…</div>
+      ) : filtered.length === 0 ? (
+        <p className="muted">No users found.</p>
       ) : (
         <div className="adm-users-list">
           {filtered.map(user => (
             <div key={user.id} className="adm-user-card">
-              <div className="adm-user-info">
-                <div className="adm-user-name">{user.name}</div>
-                <div className="adm-user-email muted">{user.email}</div>
-                <div className="adm-user-meta muted">
-                  {new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  &nbsp;·&nbsp;{user._count.attempts} Qs&nbsp;·&nbsp;{user._count.reviews} cards
+              <div className="adm-user-top">
+                <div className="adm-user-info">
+                  <div className="adm-user-name">{user.name}</div>
+                  <div className="adm-user-email muted">{user.email}</div>
+                  <div className="adm-user-meta muted">
+                    {new Date(user.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    &nbsp;·&nbsp;{user._count.attempts} Qs&nbsp;·&nbsp;{user._count.reviews} cards
+                  </div>
+                </div>
+                <div className="adm-user-badges">
+                  <button
+                    type="button"
+                    className="btn adm-manage-content-btn"
+                    onClick={() => onManageContent(user.id, user.name)}
+                    title="Manage this user's personal content"
+                  >
+                    📚 Content
+                  </button>
+                  <button
+                    type="button"
+                    className={`adm-role-badge adm-role-badge--${user.role.toLowerCase()}`}
+                    onClick={() => toggleRole(user.id, user.role)}
+                    title={`Click to make ${user.role === 'ADMIN' ? 'Student' : 'Admin'}`}
+                  >
+                    {user.role}
+                  </button>
                 </div>
               </div>
 
-              <div className="adm-user-controls">
-                {/* Manage Content button */}
-                <button
-                  type="button"
-                  className="btn adm-manage-content-btn"
-                  onClick={() => onManageContent(user.id, user.name)}
-                  title="Manage this user's content"
-                >
-                  📚 Manage Content
-                </button>
-
-                {/* Role badge toggle */}
-                <button
-                  type="button"
-                  className={`adm-role-badge adm-role-badge--${user.role.toLowerCase()}`}
-                  onClick={() => toggleRole(user.id, user.role)}
-                  title={`Click to make ${user.role === 'ADMIN' ? 'Student' : 'Admin'}`}
-                >
-                  {user.role}
-                </button>
-
-                {/* Section access toggles */}
-                <div className="adm-section-toggles">
-                  {SECTIONS.map(s => {
-                    const blocked = user.blockedSections.includes(s.key);
-                    return (
-                      <button
-                        key={s.key}
-                        type="button"
-                        className={`adm-section-toggle${blocked ? ' adm-section-toggle--blocked' : ' adm-section-toggle--allowed'}`}
-                        onClick={() => toggleSection(user.id, s.key, user.blockedSections)}
-                        title={`${s.label}: ${blocked ? 'Blocked — click to allow' : 'Allowed — click to block'}`}
-                      >
-                        <span>{s.icon}</span>
-                        <span className="adm-toggle-label">{s.label}</span>
-                        <span className="adm-toggle-state">{blocked ? '✕' : '✓'}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="adm-section-toggles">
+                {SECTIONS.map(s => {
+                  const blocked = user.blockedSections.includes(s.key);
+                  return (
+                    <button
+                      key={s.key}
+                      type="button"
+                      className={`adm-section-toggle${blocked ? ' adm-section-toggle--blocked' : ' adm-section-toggle--allowed'}`}
+                      onClick={() => toggleSection(user.id, s.key, user.blockedSections)}
+                      title={`${s.label}: ${blocked ? 'Blocked — click to allow' : 'Allowed — click to block'}`}
+                    >
+                      <span>{s.icon}</span>
+                      <span className="adm-toggle-label">{s.label}</span>
+                      <span className="adm-toggle-state">{blocked ? '✕' : '✓'}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ))}
