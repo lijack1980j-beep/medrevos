@@ -142,8 +142,8 @@ export default async function FlashcardsPage({
         <div className="fc-custom-section">
           <div className="fc-custom-header">
             <span className="kicker">Your cards</span>
-            <h3>Custom flashcards</h3>
-            <p className="muted">Create your own cards — they appear in your SRS queue like any other card.</p>
+            <h3>Quick add flashcard</h3>
+            <p className="muted">Add your own cards — they go straight into your SRS queue.</p>
           </div>
           <CustomFlashcardForm topics={allTopics} />
         </div>

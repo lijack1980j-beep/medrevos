@@ -2881,25 +2881,21 @@ textarea:focus, input:focus, select:focus {
 /* ─────────────────────────────────────────────────────────────────
    CUSTOM FLASHCARD FORM
 ───────────────────────────────────────────────────────────────── */
-.cf-create-btn { margin-top: 4px; }
-.cf-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.cf-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
-.cf-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.cf-modal-header h3 { margin: 0; font-size: 18px; }
-.cf-close { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 22px; cursor: pointer; line-height: 1; }
-.cf-close:hover { color: #fff; }
-.cf-form { display: flex; flex-direction: column; gap: 16px; }
+/* Custom flashcard form — inline */
+.cf-inline-wrap { display: flex; flex-direction: column; gap: 12px; }
+.cf-inline-trigger { display: flex; align-items: center; gap: 12px; }
+.cf-inline-form { display: flex; flex-direction: column; gap: 14px; }
+.cf-inline-grid { display: flex; flex-direction: column; gap: 12px; }
+.cf-inline-footer { display: flex; align-items: center; gap: 14px; padding-top: 4px; }
 .cf-label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.6); }
+.cf-optional { font-weight: 400; opacity: 0.6; }
 .cf-select, .cf-textarea { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 14px; width: 100%; resize: vertical; font-family: inherit; }
 .cf-select:focus, .cf-textarea:focus { outline: none; border-color: var(--accent); }
-.cf-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px; }
 .cf-error { color: #f87171; font-size: 13px; }
+.cf-added-count { font-size: 13px; font-weight: 600; color: #34d399; }
 .fc-custom-section { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 12px; }
 .fc-custom-header { display: flex; flex-direction: column; gap: 4px; }
 .fc-custom-header h3 { margin: 0; }
-[data-theme="light"] .cf-modal { background: #fff; border-color: #e5e7eb; }
-[data-theme="light"] .cf-close { color: #9ca3af; }
-[data-theme="light"] .cf-close:hover { color: #111; }
 [data-theme="light"] .cf-label { color: #6b7280; }
 [data-theme="light"] .cf-select, [data-theme="light"] .cf-textarea { background: #f9fafb; border-color: #e5e7eb; color: #111; }
 
