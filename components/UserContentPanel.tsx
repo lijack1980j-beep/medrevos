@@ -262,8 +262,8 @@ export function UserContentPanel({
       <form className="uc-add-form" onSubmit={handleCreateContent}>
         <label>Title<input name="title" required /></label>
         <label>Content<textarea name="content" rows={3} required /></label>
-        <label>Pearls<textarea name="pearls" rows={2} required /></label>
-        <label>Pitfalls<textarea name="pitfalls" rows={2} required /></label>
+        <label>Pearls<textarea name="pearls" rows={2} /></label>
+        <label>Pitfalls<textarea name="pitfalls" rows={2} /></label>
         <button type="submit" className="btn primary">{btnLabel}</button>
       </form>
     );
@@ -311,8 +311,8 @@ export function UserContentPanel({
         <form className="uc-edit-form" onSubmit={e => handleEditContent(e, item.id)}>
           <label>Title<input name="title" defaultValue={item.title ?? ''} required /></label>
           <label>Content<textarea name="content" rows={4} defaultValue={item.content ?? ''} required /></label>
-          <label>Pearls<textarea name="pearls" rows={2} defaultValue={item.pearls ?? ''} required /></label>
-          <label>Pitfalls<textarea name="pitfalls" rows={2} defaultValue={item.pitfalls ?? ''} required /></label>
+          <label>Pearls<textarea name="pearls" rows={2} defaultValue={item.pearls ?? ''} /></label>
+          <label>Pitfalls<textarea name="pitfalls" rows={2} defaultValue={item.pitfalls ?? ''} /></label>
           <div className="uc-edit-footer">
             <button type="submit" className="btn primary">Save</button>
             <button type="button" className="btn secondary" onClick={() => setEditingItemId(null)}>Cancel</button>
@@ -487,7 +487,7 @@ export function UserContentPanel({
                     <label>System<input name="system" required /></label>
                     <label>Summary<textarea name="summary" rows={2} /></label>
                     <label>Difficulty (1–5)<input type="number" name="difficulty" min="1" max="5" defaultValue="3" required /></label>
-                    <label>Est. minutes<input type="number" name="estMinutes" min="5" max="300" defaultValue="20" required /></label>
+                    <label>Est. minutes<input type="number" name="estMinutes" min="1" max="300" defaultValue="20" required /></label>
                   </div>
                   <button type="submit" className="btn primary">Create topic</button>
                 </form>

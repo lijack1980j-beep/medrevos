@@ -84,8 +84,8 @@ export function ContentManager({ type, refreshKey, globalOnly }: { type: CMType;
         <form className="cm-edit-form" onSubmit={e => handleEdit(e, item.id)}>
           <label>Title<input name="title" defaultValue={l.title} required /></label>
           <label>Content<textarea name="content" rows={5} defaultValue={l.content} required /></label>
-          <label>Pearls<textarea name="pearls" rows={3} defaultValue={l.pearls} required /></label>
-          <label>Pitfalls<textarea name="pitfalls" rows={3} defaultValue={l.pitfalls} required /></label>
+          <label>Pearls<textarea name="pearls" rows={3} defaultValue={l.pearls} /></label>
+          <label>Pitfalls<textarea name="pitfalls" rows={3} defaultValue={l.pitfalls} /></label>
           <div className="cm-edit-footer"><button type="submit" className="btn primary">Save</button></div>
         </form>
       );
