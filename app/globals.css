@@ -2974,6 +2974,118 @@ textarea:focus, input:focus, select:focus {
 }
 
 /* ─────────────────────────────────────────────────────────────────
+   STUDENT PSYCHOLOGY  (an-psy-*)
+───────────────────────────────────────────────────────────────── */
+.an-psy-section { display: flex; flex-direction: column; gap: 24px; margin-top: 8px; }
+.an-psy-header  { display: flex; flex-direction: column; gap: 4px; }
+.an-psy-title   { font-size: 22px; font-weight: 800; margin: 0; }
+
+/* Narrative card */
+.an-psy-narrative { display: flex; align-items: flex-start; gap: 16px; padding: 20px 24px; }
+.an-psy-narrative-icon { font-size: 32px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+.an-psy-narrative-text { font-size: 14px; line-height: 1.75; color: var(--text-secondary); margin: 0 0 10px; }
+.an-psy-narrative-meta { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 12px; color: var(--muted); }
+.an-psy-narrative-meta strong { color: var(--text); }
+
+/* Momentum colours */
+.an-momentum--good    { color: #34d399; }
+.an-momentum--neutral { color: var(--muted); }
+.an-momentum--warn    { color: #f87171; }
+
+/* 3-column card grid */
+.an-psy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 900px) { .an-psy-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 580px) { .an-psy-grid { grid-template-columns: 1fr; } }
+
+/* Individual card */
+.an-psy-card { display: flex; flex-direction: column; gap: 8px; padding: 20px; }
+.an-psy-card--good   { border-color: rgba(52,211,153,0.3); }
+.an-psy-card--warn   { border-color: rgba(251,146,60,0.3); }
+.an-psy-card--danger { border-color: rgba(248,113,113,0.3); }
+.an-psy-card-icon  { font-size: 26px; line-height: 1; }
+.an-psy-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; }
+.an-psy-card-value { font-size: 18px; font-weight: 800; }
+.an-psy-card-desc  { font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+.an-psy-card-meta  { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.an-psy-card-meta strong { color: var(--text-secondary); }
+
+/* Value colour variants */
+.an-psy-val--good   { color: #34d399; }
+.an-psy-val--warn   { color: #fb923c; }
+.an-psy-val--danger { color: #f87171; }
+
+/* Signal tags */
+.an-psy-signal { font-size: 10px; background: rgba(248,113,113,0.12); color: #f87171; border-radius: 4px; padding: 2px 6px; }
+
+/* Burnout / resilience / focus progress bars (use <progress>) */
+.an-burnout-bar, .an-resilience-bar, .an-psy-focus-bar {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px; border-radius: 99px; border: none; background: rgba(255,255,255,0.08);
+}
+/* Burnout */
+.an-burnout-bar::-webkit-progress-bar  { background: rgba(255,255,255,0.08); border-radius: 99px; }
+.an-burnout-bar--good::-webkit-progress-value  { background: #34d399; border-radius: 99px; }
+.an-burnout-bar--warn::-webkit-progress-value  { background: #fb923c; border-radius: 99px; }
+.an-burnout-bar--danger::-webkit-progress-value{ background: #f87171; border-radius: 99px; }
+.an-burnout-bar--good::-moz-progress-bar   { background: #34d399; border-radius: 99px; }
+.an-burnout-bar--warn::-moz-progress-bar   { background: #fb923c; border-radius: 99px; }
+.an-burnout-bar--danger::-moz-progress-bar { background: #f87171; border-radius: 99px; }
+/* Resilience */
+.an-resilience-bar::-webkit-progress-bar  { background: rgba(255,255,255,0.08); border-radius: 99px; }
+.an-resilience-bar--good::-webkit-progress-value { background: #34d399; border-radius: 99px; }
+.an-resilience-bar--ok::-webkit-progress-value   { background: #fb923c; border-radius: 99px; }
+.an-resilience-bar--low::-webkit-progress-value  { background: #f87171; border-radius: 99px; }
+.an-resilience-bar--good::-moz-progress-bar { background: #34d399; border-radius: 99px; }
+.an-resilience-bar--ok::-moz-progress-bar   { background: #fb923c; border-radius: 99px; }
+.an-resilience-bar--low::-moz-progress-bar  { background: #f87171; border-radius: 99px; }
+/* Focus */
+.an-psy-focus-bar::-webkit-progress-bar   { background: rgba(255,255,255,0.08); border-radius: 99px; }
+.an-psy-focus-bar::-webkit-progress-value { background: var(--accent); border-radius: 99px; }
+.an-psy-focus-bar::-moz-progress-bar      { background: var(--accent); border-radius: 99px; }
+
+/* Focus bar wrapper */
+.an-psy-focus-bar-wrap { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.an-psy-focus-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); }
+
+/* Confidence diff row */
+.an-psy-diff-row  { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 8px 10px; }
+.an-psy-diff-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+.an-psy-diff-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.an-psy-diff-val   { font-size: 18px; font-weight: 800; }
+.an-psy-diff-item--easy .an-psy-diff-val { color: #34d399; }
+.an-psy-diff-item--hard .an-psy-diff-val { color: #f59e0b; }
+.an-psy-diff-sep   { font-size: 11px; color: var(--muted); }
+
+/* Session pattern */
+.an-psy-session-stats { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.an-psy-session-row   { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.an-psy-session-key   { color: var(--muted); }
+.an-psy-session-val   { font-weight: 600; color: var(--text-secondary); }
+
+/* Avoidance alert */
+.an-psy-avoid { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; border-color: rgba(251,146,60,0.3); }
+.an-psy-avoid-header { display: flex; align-items: flex-start; gap: 14px; }
+.an-psy-avoid-icon   { font-size: 24px; line-height: 1; flex-shrink: 0; }
+.an-psy-avoid-title  { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.an-psy-avoid-sub    { font-size: 12px; color: var(--muted); }
+.an-psy-avoid-list   { display: flex; flex-direction: column; gap: 6px; }
+.an-psy-avoid-item   { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px 12px; font-size: 13px; text-decoration: none; color: var(--text); transition: background 0.15s; }
+.an-psy-avoid-item:hover { background: rgba(255,255,255,0.07); }
+.an-psy-avoid-sys    { font-size: 11px; }
+
+/* Light mode */
+[data-theme="light"] .an-psy-narrative { background: #f9fafb; }
+[data-theme="light"] .an-psy-diff-row  { background: #f3f4f6; }
+[data-theme="light"] .an-psy-avoid-item { background: #f9fafb; color: #111; }
+[data-theme="light"] .an-psy-avoid-item:hover { background: #f0f0f0; }
+[data-theme="light"] .an-burnout-bar,
+[data-theme="light"] .an-resilience-bar,
+[data-theme="light"] .an-psy-focus-bar { background: rgba(0,0,0,0.08); }
+[data-theme="light"] .an-burnout-bar::-webkit-progress-bar,
+[data-theme="light"] .an-resilience-bar::-webkit-progress-bar,
+[data-theme="light"] .an-psy-focus-bar::-webkit-progress-bar { background: rgba(0,0,0,0.08); }
+
+/* ─────────────────────────────────────────────────────────────────
    THEME COLOR CUSTOMIZER  (tcc-*)
 ───────────────────────────────────────────────────────────────── */
 .tcc-root { display: flex; flex-direction: column; gap: 20px; }
