@@ -274,6 +274,9 @@ button, input, textarea, select { font: inherit; }
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0;
@@ -323,6 +326,9 @@ button, input, textarea, select { font: inherit; }
     transparent 100%
   );
   -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
@@ -1120,6 +1126,7 @@ textarea:focus, input:focus, select:focus {
 .study-action-stat { display: flex; align-items: center; gap: 6px; font-size: 13px; color: rgba(255,255,255,0.35); margin-left: auto; }
 .study-action-dot { color: rgba(255,255,255,0.2); }
 .study-empty { display: flex; align-items: center; justify-content: center; min-height: 200px; }
+.study-no-lesson { font-size: 0.875rem; }
 
 /* ── Cases page ── */
 .cases-page { display: flex; flex-direction: column; gap: 20px; }
@@ -1514,7 +1521,7 @@ textarea:focus, input:focus, select:focus {
 .search-result-top { display: flex; align-items: center; justify-content: space-between; }
 .search-result-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.3); }
 .search-result-title { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); line-height: 1.4; }
-.search-result-sub { font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.search-result-sub { font-size: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
 /* Nav search */
 .nav-search { display: flex; align-items: center; }
@@ -2851,7 +2858,7 @@ textarea:focus, input:focus, select:focus {
 .cert-modal { background: linear-gradient(135deg, #1e1b4b 0%, #1a1f3c 60%, #0d0f1a 100%); border: 1px solid rgba(99,102,241,0.4); border-radius: 20px; padding: 40px 32px; width: 100%; max-width: 380px; display: flex; flex-direction: column; align-items: center; gap: 16px; position: relative; text-align: center; box-shadow: 0 0 60px rgba(99,102,241,0.25); }
 .cert-close { position: absolute; top: 16px; right: 16px; background: none; border: none; color: rgba(255,255,255,0.4); font-size: 22px; cursor: pointer; line-height: 1; }
 .cert-close:hover { color: #fff; }
-.cert-decoration { position: absolute; inset: 0; border-radius: 20px; border: 3px solid transparent; background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.1), rgba(99,102,241,0.3)) border-box; -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0); -webkit-mask-composite: destination-out; mask-composite: exclude; pointer-events: none; }
+.cert-decoration { position: absolute; inset: 0; border-radius: 20px; border: 3px solid transparent; background: linear-gradient(135deg, rgba(99,102,241,0.3), rgba(139,92,246,0.1), rgba(99,102,241,0.3)) border-box; -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0); mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0); -webkit-mask-composite: destination-out; mask-composite: exclude; pointer-events: none; }
 .cert-medal { font-size: 52px; line-height: 1; }
 .cert-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(255,255,255,0.4); }
 .cert-subtitle { font-size: 13px; color: rgba(255,255,255,0.5); }

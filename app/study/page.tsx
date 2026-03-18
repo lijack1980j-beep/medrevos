@@ -76,28 +76,40 @@ export default async function StudyPage({ searchParams }: { searchParams?: { top
         </div>
 
         {/* Main content */}
-        {active && lesson ? (
+        {active ? (
           <div className="study-content">
 
-            <div className="panel study-lesson">
-              <div className="study-lesson-top">
-                <span className="badge">{active.system}</span>
-                {active.highYield && <span className="badge badge--hy">High Yield</span>}
-              </div>
-              <h2 className="study-lesson-title">{lesson.title}</h2>
-              <p className="study-lesson-body">{lesson.content}</p>
+            {lesson ? (
+              <div className="panel study-lesson">
+                <div className="study-lesson-top">
+                  <span className="badge">{active.system}</span>
+                  {active.highYield && <span className="badge badge--hy">High Yield</span>}
+                </div>
+                <h2 className="study-lesson-title">{lesson.title}</h2>
+                <p className="study-lesson-body">{lesson.content}</p>
 
-              <div className="study-frame">
-                <div className="study-frame-col">
-                  <div className="study-frame-label">Pearls</div>
-                  <p className="study-frame-text">{lesson.pearls}</p>
-                </div>
-                <div className="study-frame-col">
-                  <div className="study-frame-label">Pitfalls</div>
-                  <p className="study-frame-text">{lesson.pitfalls}</p>
+                <div className="study-frame">
+                  <div className="study-frame-col">
+                    <div className="study-frame-label">Pearls</div>
+                    <p className="study-frame-text">{lesson.pearls}</p>
+                  </div>
+                  <div className="study-frame-col">
+                    <div className="study-frame-label">Pitfalls</div>
+                    <p className="study-frame-text">{lesson.pitfalls}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="panel study-lesson">
+                <div className="study-lesson-top">
+                  <span className="badge">{active.system}</span>
+                  {active.highYield && <span className="badge badge--hy">High Yield</span>}
+                </div>
+                <h2 className="study-lesson-title">{active.title}</h2>
+                {active.summary && <p className="study-lesson-body">{active.summary}</p>}
+                <p className="muted study-no-lesson">No lesson added for this topic yet.</p>
+              </div>
+            )}
 
             {user && (
               <TopicNoteEditor
