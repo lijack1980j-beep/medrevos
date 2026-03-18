@@ -89,6 +89,72 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ message: `Topic "${p.title}" created.` });
     }
 
+    // ── Import (copy) content from a global topic into one of the user's topics ─
+    if (body.kind === 'import') {
+      const fromTopicId = z.string().min(1).parse(body.fromTopicId);
+      const toTopicId   = z.string().min(1).parse(body.toTopicId);
+      const types: string[] = Array.isArray(body.types)
+        ? body.types
+        : ['lesson', 'question', 'flashcard', 'case'];
+
+      // Verify destination topic belongs to this user
+      const dest = await prisma.topic.findFirst({ where: { id: toTopicId, assignedToUserId: params.id } });
+      if (!dest) return NextResponse.json({ message: 'Destination topic not found for this user.' }, { status: 404 });
+
+      let imported = 0;
+
+      if (types.includes('lesson')) {
+        const lessons = await prisma.lesson.findMany({ where: { topicId: fromTopicId } });
+        if (lessons.length) {
+          await prisma.lesson.createMany({
+            data: lessons.map(l => ({ topicId: toTopicId, title: l.title, content: l.content, pearls: l.pearls, pitfalls: l.pitfalls })),
+          });
+          imported += lessons.length;
+        }
+      }
+
+      if (types.includes('flashcard')) {
+        const cards = await prisma.flashcard.findMany({ where: { topicId: fromTopicId } });
+        if (cards.length) {
+          await prisma.flashcard.createMany({
+            data: cards.map(c => ({ topicId: toTopicId, front: c.front, back: c.back, note: c.note })),
+          });
+          imported += cards.length;
+        }
+      }
+
+      if (types.includes('case')) {
+        const cases = await prisma.caseStudy.findMany({ where: { topicId: fromTopicId } });
+        if (cases.length) {
+          await prisma.caseStudy.createMany({
+            data: cases.map(c => ({ topicId: toTopicId, title: c.title, chiefComplaint: c.chiefComplaint, findings: c.findings, investigations: c.investigations, diagnosis: c.diagnosis, management: c.management })),
+          });
+          imported += cases.length;
+        }
+      }
+
+      if (types.includes('question')) {
+        const questions = await prisma.question.findMany({
+          where: { topicId: fromTopicId },
+          include: { options: true },
+        });
+        for (const q of questions) {
+          const created = await prisma.question.create({
+            data: {
+              topicId: toTopicId, stem: q.stem, explanation: q.explanation, difficulty: q.difficulty,
+              options: { create: q.options.map(o => ({ label: o.label, text: o.text, isCorrect: o.isCorrect })) },
+            },
+            include: { options: true },
+          });
+          const correct = created.options.find(o => o.isCorrect);
+          if (correct) await prisma.question.update({ where: { id: created.id }, data: { correctOptionId: correct.id } });
+          imported++;
+        }
+      }
+
+      return NextResponse.json({ message: `Imported ${imported} item${imported !== 1 ? 's' : ''} into "${dest.title}".` });
+    }
+
     return NextResponse.json({ message: 'Unsupported kind.' }, { status: 400 });
   } catch (error) {
     const status = String(error).includes('FORBIDDEN') ? 403 : 400;

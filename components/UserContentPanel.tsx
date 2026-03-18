@@ -53,6 +53,13 @@ export function UserContentPanel({
   const [showAssignTopic, setShowAssignTopic] = useState(false);
   const [showAddContent,  setShowAddContent]  = useState(false);
   const [editingItemId,   setEditingItemId]   = useState<string | null>(null);
+
+  // Per-topic import state (keyed by topicId)
+  const [importOpenId,   setImportOpenId]   = useState<string | null>(null);
+  const [importTopics,   setImportTopics]   = useState<GlobalTopic[]>([]);
+  const [importLoading,  setImportLoading]  = useState(false);
+  const [importSrcId,    setImportSrcId]    = useState('');
+  const [importTypes,    setImportTypes]    = useState<Record<string, boolean>>({ lesson: true, question: true, flashcard: true, case: true });
   const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(null);
 
   // Global topics for "assign existing" dropdown
@@ -111,6 +118,33 @@ export function UserContentPanel({
     const data = await res.json();
     setStatus({ ok: res.ok, msg: data.message ?? 'Done.' });
     if (res.ok) { setShowAssignTopic(false); load(); router.refresh(); }
+  }
+
+  // ── Import content from a global topic ───────────────────────────────────
+  async function openImportPanel(topicId: string) {
+    if (importOpenId === topicId) { setImportOpenId(null); return; }
+    setImportOpenId(topicId);
+    setImportSrcId('');
+    setImportLoading(true);
+    const res  = await fetch('/api/admin/users/global-topics');
+    const data = await res.json();
+    setImportTopics(data.topics ?? []);
+    setImportLoading(false);
+  }
+
+  async function handleImport(toTopicId: string) {
+    if (!importSrcId) return;
+    setStatus(null);
+    const types = Object.entries(importTypes).filter(([, v]) => v).map(([k]) => k);
+    if (types.length === 0) { setStatus({ ok: false, msg: 'Select at least one content type.' }); return; }
+    const res  = await fetch(`/api/admin/users/${userId}/content`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'import', fromTopicId: importSrcId, toTopicId, types }),
+    });
+    const data = await res.json();
+    setStatus({ ok: res.ok, msg: data.message ?? 'Done.' });
+    if (res.ok) { setImportOpenId(null); setImportSrcId(''); load(); loadContent(); router.refresh(); }
   }
 
   // ── Topic CRUD ────────────────────────────────────────────────────────────
@@ -415,7 +449,7 @@ export function UserContentPanel({
               {showAssignTopic && (
                 <div className="panel uc-assign-panel">
                   <h4>Assign global topic to {userName}</h4>
-                  <p className="muted" style={{ fontSize: '0.82rem' }}>
+                  <p className="muted uc-assign-hint">
                     This makes the topic exclusive to this student. It will no longer appear for all users.
                   </p>
                   {assignLoading ? (
@@ -428,7 +462,7 @@ export function UserContentPanel({
                         <div key={gt.id} className="uc-global-topic-row">
                           <div>
                             <span className="uc-topic-title">{gt.title}</span>
-                            <span className="badge" style={{ marginLeft: '0.5rem' }}>{gt.system}</span>
+                            <span className="badge uc-assign-badge">{gt.system}</span>
                           </div>
                           <button type="button" className="btn primary" onClick={() => handleAssignTopic(gt.id)}>
                             Assign to {userName}
@@ -485,6 +519,69 @@ export function UserContentPanel({
 
                           {isExp && (
                             <div className="uc-topic-body">
+
+                              {/* ── Import from global topic ── */}
+                              <div className="uc-import-bar">
+                                <button
+                                  type="button"
+                                  className={`btn secondary uc-import-toggle${importOpenId === topic.id ? ' uc-btn-active' : ''}`}
+                                  onClick={() => openImportPanel(topic.id)}
+                                  title="Copy content from a global topic into this topic"
+                                >
+                                  {importOpenId === topic.id ? '✕ Cancel import' : '⬇ Import from global topic'}
+                                </button>
+                              </div>
+
+                              {importOpenId === topic.id && (
+                                <div className="uc-import-panel panel">
+                                  <h4 className="uc-import-title">Import content into "{topic.title}"</h4>
+                                  {importLoading ? (
+                                    <div className="adm-loading">Loading global topics…</div>
+                                  ) : importTopics.length === 0 ? (
+                                    <p className="muted">No global topics available to import from.</p>
+                                  ) : (
+                                    <>
+                                      <label className="uc-import-label">
+                                        Source topic
+                                        <select
+                                          className="uc-import-select"
+                                          value={importSrcId}
+                                          onChange={e => setImportSrcId(e.target.value)}
+                                        >
+                                          <option value="">— select a global topic —</option>
+                                          {importTopics.map(gt => (
+                                            <option key={gt.id} value={gt.id}>{gt.title} ({gt.system})</option>
+                                          ))}
+                                        </select>
+                                      </label>
+
+                                      <div className="uc-import-types">
+                                        <span className="uc-import-types-label">Copy:</span>
+                                        {(['lesson', 'question', 'flashcard', 'case'] as const).map(t => (
+                                          <label key={t} className="uc-import-check">
+                                            <input
+                                              type="checkbox"
+                                              checked={importTypes[t] ?? true}
+                                              onChange={e => setImportTypes(prev => ({ ...prev, [t]: e.target.checked }))}
+                                            />
+                                            {CONTENT_LABELS[t]}
+                                          </label>
+                                        ))}
+                                      </div>
+
+                                      <button
+                                        type="button"
+                                        className="btn primary"
+                                        disabled={!importSrcId}
+                                        onClick={() => handleImport(topic.id)}
+                                      >
+                                        Import selected content
+                                      </button>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+
                               {/* Content sub-tabs */}
                               <div className="uc-ctabs">
                                 {CONTENT_TABS.map(ct => (
