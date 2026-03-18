@@ -89,7 +89,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
       return NextResponse.json({ message: `Topic "${p.title}" created.` });
     }
 
-    // ── Import (copy) content from a global topic into one of the user's topics ─
+    // ── Import (copy) content from any topic into one of the user's topics ──────
     if (body.kind === 'import') {
       const fromTopicId = z.string().min(1).parse(body.fromTopicId);
       const toTopicId   = z.string().min(1).parse(body.toTopicId);
@@ -97,9 +97,21 @@ export async function POST(request: Request, { params }: { params: { id: string 
         ? body.types
         : ['lesson', 'question', 'flashcard', 'case'];
 
-      // Verify destination topic belongs to this user
-      const dest = await prisma.topic.findFirst({ where: { id: toTopicId, assignedToUserId: params.id } });
-      if (!dest) return NextResponse.json({ message: 'Destination topic not found for this user.' }, { status: 404 });
+      // Verify destination topic belongs to this user (either assigned OR null for global admins)
+      const dest = await prisma.topic.findFirst({
+        where: { id: toTopicId, assignedToUserId: params.id },
+      });
+      if (!dest) {
+        // Also allow import INTO a global topic if the admin just wants to copy content
+        const globalDest = await prisma.topic.findFirst({ where: { id: toTopicId, assignedToUserId: null } });
+        if (!globalDest) {
+          return NextResponse.json(
+            { message: `Destination topic not found. toTopicId=${toTopicId} userId=${params.id}` },
+            { status: 404 },
+          );
+        }
+      }
+      const targetTopic = dest ?? (await prisma.topic.findFirst({ where: { id: toTopicId } }))!;
 
       let imported = 0;
 
@@ -152,7 +164,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
         }
       }
 
-      return NextResponse.json({ message: `Imported ${imported} item${imported !== 1 ? 's' : ''} into "${dest.title}".` });
+      return NextResponse.json({ message: `Imported ${imported} item${imported !== 1 ? 's' : ''} into "${targetTopic.title}".` });
     }
 
     return NextResponse.json({ message: 'Unsupported kind.' }, { status: 400 });
@@ -170,18 +182,35 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const p = deleteSchema.parse(body);
 
     if (p.kind === 'topic') {
-      await prisma.topic.deleteMany({ where: { id: p.id, assignedToUserId: params.id } });
+      // Verify ownership before deleting so we surface a real error if not found
+      const topic = await prisma.topic.findFirst({
+        where: { id: p.id, assignedToUserId: params.id },
+      });
+      if (!topic) {
+        return NextResponse.json(
+          { message: `Topic not found or does not belong to this user. topicId=${p.id} userId=${params.id}` },
+          { status: 404 },
+        );
+      }
+      // Delete by id only — ownership already verified above
+      await prisma.topic.delete({ where: { id: p.id } });
     }
+
     if (p.kind === 'exam') {
-      await prisma.examSession.deleteMany({ where: { id: p.id, userId: params.id } });
+      const session = await prisma.examSession.findFirst({ where: { id: p.id, userId: params.id } });
+      if (!session) return NextResponse.json({ message: 'Exam session not found.' }, { status: 404 });
+      await prisma.examSession.delete({ where: { id: p.id } });
     }
+
     if (p.kind === 'calendar') {
-      await prisma.calendarEvent.deleteMany({ where: { id: p.id, userId: params.id } });
+      const event = await prisma.calendarEvent.findFirst({ where: { id: p.id, userId: params.id } });
+      if (!event) return NextResponse.json({ message: 'Calendar event not found.' }, { status: 404 });
+      await prisma.calendarEvent.delete({ where: { id: p.id } });
     }
 
     return NextResponse.json({ message: 'Deleted.' });
   } catch (error) {
-    const status = String(error).includes('FORBIDDEN') ? 403 : 400;
+    const status = String(error).includes('FORBIDDEN') ? 403 : 500;
     return NextResponse.json({ message: 'Delete failed.', error: String(error) }, { status });
   }
 }
