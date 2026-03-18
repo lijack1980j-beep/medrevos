@@ -1,4 +1,7 @@
 :root {
+  --grad-1: #0a0a0f;
+  --grad-2: #1a1025;
+  --grad-3: #0f1629;
   --bg: #0a0a0f;
   --bg-elevated: #12121a;
   --panel: rgba(255,255,255,0.03);
@@ -30,7 +33,7 @@
 html, body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif; color: var(--text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; min-height: 100vh; }
 
 body {
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1025 25%, #0f1629 50%, #1a0f2e 75%, #0a0a0f 100%);
+  background: linear-gradient(135deg, var(--grad-1) 0%, var(--grad-2) 25%, var(--grad-3) 50%, var(--grad-2) 75%, var(--grad-1) 100%);
   background-attachment: fixed;
   position: relative;
   overflow-x: hidden;
@@ -2872,3 +2875,37 @@ textarea:focus, input:focus, select:focus {
 .tcc-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
 .tcc-reset-btn { font-size: 13px; }
 .tcc-hint { margin-bottom: 16px; }
+
+/* ── Light mode gradient defaults ─────────────────────────────── */
+[data-theme="light"] {
+  --grad-1: #f8fafc;
+  --grad-2: #e0e7ff;
+  --grad-3: #f0f4ff;
+}
+
+/* ── GradientCustomizer (gc-*) ────────────────────────────────── */
+.gc-root { display: flex; flex-direction: column; gap: 20px; }
+.gc-section { display: flex; flex-direction: column; gap: 12px; }
+.gc-section-header { display: flex; align-items: center; gap: 14px; }
+.gc-mode-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); min-width: 140px; }
+.gc-preview-strip { width: 120px; height: 28px; border-radius: 8px; border: 1px solid var(--border); flex-shrink: 0; }
+.gc-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.gc-preset {
+  width: 64px; height: 40px; border-radius: 8px; border: 2px solid transparent;
+  cursor: pointer; position: relative; overflow: hidden; transition: transform 0.15s, border-color 0.15s;
+}
+.gc-preset:hover { transform: scale(1.06); }
+.gc-preset--active { border-color: #fff; box-shadow: 0 0 0 1px rgba(255,255,255,0.4); }
+[data-theme="light"] .gc-preset--active { border-color: #000; box-shadow: 0 0 0 1px rgba(0,0,0,0.3); }
+.gc-preset-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  font-size: 9px; text-align: center; padding: 2px 0;
+  background: rgba(0,0,0,0.55); color: #fff; letter-spacing: 0.02em;
+}
+.gc-stops { display: flex; gap: 16px; align-items: center; }
+.gc-stop-label { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; }
+.gc-stop-name { font-size: 11px; color: var(--muted); }
+.gc-color-input { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); cursor: pointer; padding: 2px; background: none; }
+.gc-color-input:hover { border-color: var(--accent); }
+.gc-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+.gc-reset-btn { font-size: 13px; }

@@ -21,12 +21,32 @@ export function applyThemeColors(darkAccent: string, lightAccent: string) {
   root.style.setProperty('--shadow-glow-strong', `0 0 60px ${hexToRgba(accent, isDark ? 0.3 : 0.2)}`);
 }
 
+export function applyGradient(
+  dark: { c1: string; c2: string; c3: string },
+  light: { c1: string; c2: string; c3: string }
+) {
+  const root = document.documentElement;
+  const isDark = root.getAttribute('data-theme') !== 'light';
+  const g = isDark ? dark : light;
+  root.style.setProperty('--grad-1', g.c1);
+  root.style.setProperty('--grad-2', g.c2);
+  root.style.setProperty('--grad-3', g.c3);
+}
+
 export function ThemeColorApplier() {
   useEffect(() => {
     function apply() {
       const dark  = localStorage.getItem('themeAccentDark')  ?? '#6366f1';
       const light = localStorage.getItem('themeAccentLight') ?? '#2563eb';
       applyThemeColors(dark, light);
+
+      // Re-apply gradient for current theme
+      const storedGradDark  = localStorage.getItem('gradDark');
+      const storedGradLight = localStorage.getItem('gradLight');
+      applyGradient(
+        storedGradDark  ? JSON.parse(storedGradDark)  : { c1: '#0a0a0f', c2: '#1a1025', c3: '#0f1629' },
+        storedGradLight ? JSON.parse(storedGradLight) : { c1: '#f8fafc', c2: '#e0e7ff', c3: '#f0f4ff' }
+      );
     }
 
     apply();
