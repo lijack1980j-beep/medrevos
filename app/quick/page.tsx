@@ -1,7 +1,9 @@
 import { requireUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 import { QuickFlashcardsClient } from '@/components/QuickFlashcardsClient';
 
 export default async function QuickPage() {
-  await requireUser();
+  const user = await requireUser();
+  checkAccess(user, 'quick');
   return <QuickFlashcardsClient />;
 }

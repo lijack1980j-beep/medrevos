@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { FlashcardReviewClient } from '@/components/FlashcardReviewClient';
 import { CustomFlashcardForm } from '@/components/CustomFlashcardForm';
 import { requireUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 
 export default async function FlashcardsPage({
   searchParams,
@@ -12,6 +13,7 @@ export default async function FlashcardsPage({
   searchParams: { topic?: string; mode?: string };
 }) {
   const user = await requireUser();
+  checkAccess(user, 'flashcards');
   const selectedSlug = searchParams.topic ?? null;
   const freeMode = searchParams.mode === 'free';
 

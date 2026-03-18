@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 import {
   percent,
   calculateStreak,
@@ -18,6 +19,7 @@ import { PrintButton } from '@/components/PrintButton';
 export default async function AnalyticsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/auth/sign-in');
+  checkAccess(user, 'analytics');
 
   const [attempts, reviews, topicProgress, allTopics, flashcardStates, totalCards, fullUser] = await Promise.all([
     prisma.questionAttempt.findMany({

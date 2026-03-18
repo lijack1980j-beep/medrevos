@@ -11,7 +11,7 @@ export async function MainNav() {
     <nav className="nav">
       <div className="nav-inner">
         <Link href="/" className="brand">Med<span>Revision</span>OS</Link>
-        <NavLinks isAdmin={user?.role === 'ADMIN'} />
+        <NavLinks isAdmin={user?.role === 'ADMIN'} blockedSections={user?.blockedSections ?? []} />
         <SearchInput />
         <div className="row">
           <ThemeToggle />

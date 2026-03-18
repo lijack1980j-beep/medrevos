@@ -54,9 +54,10 @@ model User {
   bookmarks      Bookmark[]
   notes          TopicNote[]
   examSessions   ExamSession[]
-  questionSRS     QuestionSRSState[]
-  customCards     Flashcard[]         @relation("CustomFlashcards")
-  calendarEvents  CalendarEvent[]
+  questionSRS      QuestionSRSState[]
+  customCards      Flashcard[]         @relation("CustomFlashcards")
+  calendarEvents   CalendarEvent[]
+  blockedSections  String[]            @default([])
 }
 
 model Session {

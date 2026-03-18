@@ -3,9 +3,11 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 
 export default async function ExamHistoryPage() {
   const user = await requireUser();
+  checkAccess(user, 'history');
 
   const sessions = await prisma.examSession.findMany({
     where: { userId: user.id, status: 'COMPLETED' },

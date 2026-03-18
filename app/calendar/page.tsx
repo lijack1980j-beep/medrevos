@@ -3,11 +3,12 @@ export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 import { CalendarClient, type DayData, type CalEvent } from '@/components/CalendarClient';
 
 export default async function CalendarPage() {
   const user = await requireUser();
-  if (!user) redirect('/auth/sign-in');
+  checkAccess(user, 'calendar');
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);

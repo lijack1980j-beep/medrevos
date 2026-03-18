@@ -2,8 +2,12 @@ export const dynamic = 'force-dynamic';
 
 import { prisma } from '@/lib/db';
 import { CasesClient } from '@/components/CasesClient';
+import { requireUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 
 export default async function CasesPage() {
+  const user = await requireUser();
+  checkAccess(user, 'cases');
   const cases = await prisma.caseStudy.findMany({
     include: { topic: true },
     orderBy: [{ topic: { system: 'asc' } }, { title: 'asc' }],

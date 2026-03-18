@@ -2,10 +2,12 @@ export const dynamic = 'force-dynamic';
 
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 import { ExamConfig } from '@/components/ExamConfig';
 
 export default async function ExamPage() {
-  await requireUser();
+  const user = await requireUser();
+  checkAccess(user, 'exam');
   const topics = await prisma.topic.findMany({
     select: { id: true, title: true, system: true, _count: { select: { questions: true } } },
     orderBy: [{ system: 'asc' }, { title: 'asc' }],

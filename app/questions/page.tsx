@@ -3,9 +3,11 @@ export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/db';
 import { QuestionBank } from '@/components/QuestionBank';
 import { getCurrentUser } from '@/lib/auth';
+import { checkAccess } from '@/lib/access';
 
 export default async function QuestionsPage({ searchParams }: { searchParams?: { topic?: string } }) {
   const user = await getCurrentUser();
+  checkAccess(user, 'qbank');
   const topicSlug = searchParams?.topic;
 
   const [questions, bookmarks, wrongAttempts, allAttempts, srsStates] = await Promise.all([

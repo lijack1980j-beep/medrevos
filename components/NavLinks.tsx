@@ -4,6 +4,19 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { usePathname } from 'next/navigation';
 
+// Maps section keys from lib/access.ts → nav hrefs
+const SECTION_ROUTES: Record<string, string> = {
+  study:      '/study',
+  qbank:      '/questions',
+  flashcards: '/flashcards',
+  quick:      '/quick',
+  cases:      '/cases',
+  exam:       '/exam',
+  history:    '/exam/history',
+  analytics:  '/analytics',
+  calendar:   '/calendar',
+};
+
 const primaryLinks = [
   ['/', 'Home'],
   ['/dashboard', 'Dashboard'],
@@ -24,7 +37,10 @@ const metaLinks = [
   ['/calendar', 'Calendar'],
 ] as unknown as readonly (readonly [Route, string])[];
 
-export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
+export function NavLinks({ isAdmin, blockedSections = [] }: {
+  isAdmin: boolean;
+  blockedSections?: string[];
+}) {
   const pathname = usePathname();
 
   function isActive(href: Route) {
@@ -33,21 +49,29 @@ export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
       return pathname === '/exam' ||
         pathname.startsWith('/exam/results') ||
         pathname === '/exam/history'
-        ? false
-        : true;
+        ? false : true;
     }
     return pathname === href || pathname.startsWith(href + '/');
   }
 
-  const renderLink = ([href, label]: readonly [Route, string]) => (
-    <Link
-      key={href}
-      href={href}
-      className={`nav-link${isActive(href) ? ' active' : ''}`}
-    >
-      {label}
-    </Link>
-  );
+  function isBlocked(href: string) {
+    if (isAdmin) return false;
+    const entry = Object.entries(SECTION_ROUTES).find(([, route]) => route === href);
+    return entry ? blockedSections.includes(entry[0]) : false;
+  }
+
+  const renderLink = ([href, label]: readonly [Route, string]) => {
+    if (isBlocked(href)) return null;
+    return (
+      <Link
+        key={href}
+        href={href}
+        className={`nav-link${isActive(href) ? ' active' : ''}`}
+      >
+        {label}
+      </Link>
+    );
+  };
 
   return (
     <div className="nav-links">
@@ -56,7 +80,11 @@ export function NavLinks({ isAdmin }: { isAdmin: boolean }) {
       {examLinks.map(renderLink)}
       <span className="nav-sep" />
       {metaLinks.map(renderLink)}
-      {isAdmin && renderLink(['/admin', 'Admin'])}
+      {isAdmin && (
+        <Link href="/admin" className={`nav-link${pathname.startsWith('/admin') ? ' active' : ''}`}>
+          Admin
+        </Link>
+      )}
     </div>
   );
 }

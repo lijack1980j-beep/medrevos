@@ -9,7 +9,7 @@ type Topic = {
 };
 type FormStatus = { ok: boolean; message: string } | null;
 
-export function AdminForms({ topics }: { topics: Topic[] }) {
+export function AdminForms({ topics, activeForm }: { topics: Topic[]; activeForm?: 'topic' | 'lesson' | 'flashcard' | 'question' }) {
   const router = useRouter();
   const [topicStatus,    setTopicStatus]    = useState<FormStatus>(null);
   const [lessonStatus,   setLessonStatus]   = useState<FormStatus>(null);
@@ -66,10 +66,13 @@ export function AdminForms({ topics }: { topics: Topic[] }) {
     if (response.ok) router.refresh();
   }
 
+  const show = (kind: 'topic' | 'lesson' | 'flashcard' | 'question') =>
+    !activeForm || activeForm === kind;
+
   return (
     <div className="admin-forms-wrap">
       <div className="grid cols-2">
-        <form className="panel" onSubmit={(e) => submitForm(e, 'topic')}>
+        {show('topic') && <form className="panel" onSubmit={(e) => submitForm(e, 'topic')}>
           <h3>Create topic</h3>
           <div className="list">
             <label>Title<input name="title" required /></label>
@@ -85,9 +88,9 @@ export function AdminForms({ topics }: { topics: Topic[] }) {
           </div>
           <button type="submit" className="btn primary admin-form-btn">Save topic</button>
           {topicStatus && <p className={`admin-form-status${topicStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{topicStatus.message}</p>}
-        </form>
+        </form>}
 
-        <form className="panel" onSubmit={(e) => submitForm(e, 'lesson')}>
+        {show('lesson') && <form className="panel" onSubmit={(e) => submitForm(e, 'lesson')}>
           <h3>Create lesson</h3>
           <div className="list">
             <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
@@ -98,11 +101,11 @@ export function AdminForms({ topics }: { topics: Topic[] }) {
           </div>
           <button type="submit" className="btn primary admin-form-btn">Save lesson</button>
           {lessonStatus && <p className={`admin-form-status${lessonStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{lessonStatus.message}</p>}
-        </form>
+        </form>}
       </div>
 
       <div className="grid cols-2">
-        <form className="panel" onSubmit={(e) => submitForm(e, 'flashcard')}>
+        {show('flashcard') && <form className="panel" onSubmit={(e) => submitForm(e, 'flashcard')}>
           <h3>Create flashcard</h3>
           <div className="list">
             <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
@@ -112,9 +115,9 @@ export function AdminForms({ topics }: { topics: Topic[] }) {
           </div>
           <button type="submit" className="btn primary admin-form-btn">Save flashcard</button>
           {cardStatus && <p className={`admin-form-status${cardStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{cardStatus.message}</p>}
-        </form>
+        </form>}
 
-        <form className="panel" onSubmit={(e) => submitForm(e, 'question')}>
+        {show('question') && <form className="panel" onSubmit={(e) => submitForm(e, 'question')}>
           <h3>Create question</h3>
           <div className="list">
             <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
@@ -129,11 +132,11 @@ export function AdminForms({ topics }: { topics: Topic[] }) {
           </div>
           <button type="submit" className="btn primary admin-form-btn">Save question</button>
           {questionStatus && <p className={`admin-form-status${questionStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{questionStatus.message}</p>}
-        </form>
+        </form>}
       </div>
 
-      {/* Topic management with inline edit */}
-      <div className="panel">
+      {/* Topic management with inline edit — shown in Topics panel or no filter */}
+      {show('topic') && <div className="panel">
         <div className="admin-control-header">
           <h3>Topic management</h3>
           <button type="button" className="btn secondary" onClick={reseed}>Reseed demo content</button>
@@ -184,7 +187,7 @@ export function AdminForms({ topics }: { topics: Topic[] }) {
         </div>
 
         {deleteStatus && <p className={`admin-form-status${deleteStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>{deleteStatus.message}</p>}
-      </div>
+      </div>}
     </div>
   );
 }
