@@ -68,12 +68,14 @@ export default function SettingsPage() {
           <h3 className="settings-section-title">Exam</h3>
 
           <div className="settings-field">
-            <label className="settings-label">Exam date</label>
+            <label className="settings-label" htmlFor="exam-date">Exam date</label>
             <input
+              id="exam-date"
               type="date"
               value={examDate}
               onChange={e => setExamDate(e.target.value)}
               className="settings-input"
+              title="Exam date"
             />
             <p className="settings-hint">Used for the exam countdown and readiness projection in Analytics.</p>
           </div>
@@ -98,11 +100,9 @@ export default function SettingsPage() {
           </div>
         </div>
 
-      </div>
-
         <div className="panel settings-section">
           <h3 className="settings-section-title">Accent color</h3>
-          <p className="settings-hint" style={{ marginBottom: 16 }}>Customize the accent color for dark and light modes. Changes apply instantly as a live preview.</p>
+          <p className="settings-hint tcc-hint">Customize the accent color for dark and light modes. Changes apply instantly as a live preview.</p>
           <ThemeCustomizer />
         </div>
 

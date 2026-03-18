@@ -2871,3 +2871,4 @@ textarea:focus, input:focus, select:focus {
 
 .tcc-actions { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
 .tcc-reset-btn { font-size: 13px; }
+.tcc-hint { margin-bottom: 16px; }
