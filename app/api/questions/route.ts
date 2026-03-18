@@ -9,8 +9,16 @@ import { updateTopicProgress } from '@/lib/progress';
 const attemptSchema = z.object({ questionId: z.string().min(1), selected: z.string().min(1) });
 
 export async function GET() {
-  const questions = await prisma.question.findMany({ include: { options: true, topic: true } });
-  return NextResponse.json(questions);
+  try {
+    const user = await requireUser();
+    const questions = await prisma.question.findMany({
+      where: { topic: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] } },
+      include: { options: true, topic: true },
+    });
+    return NextResponse.json(questions);
+  } catch {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 }
 
 export async function POST(request: Request) {

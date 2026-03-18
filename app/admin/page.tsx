@@ -9,6 +9,7 @@ export default async function AdminPage() {
 
   const [topics, userCount, topicCount, questionCount, flashcardCount, lessonCount] = await Promise.all([
     prisma.topic.findMany({
+      where: { assignedToUserId: null }, // global topics only — private user topics managed via Users panel
       select: {
         id: true, title: true, slug: true, system: true,
         summary: true, difficulty: true, estMinutes: true, highYield: true,

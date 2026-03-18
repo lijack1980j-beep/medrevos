@@ -11,16 +11,23 @@ const schema = z.object({
 });
 
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  await requireAdmin();
+  try {
+    await requireAdmin();
 
-  const body = schema.safeParse(await request.json());
-  if (!body.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    const body = schema.safeParse(await request.json());
+    if (!body.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
 
-  const user = await prisma.user.update({
-    where: { id: params.id },
-    data: body.data,
-    select: { id: true, name: true, email: true, role: true, blockedSections: true },
-  });
+    const user = await prisma.user.update({
+      where: { id: params.id },
+      data: body.data,
+      select: { id: true, name: true, email: true, role: true, blockedSections: true },
+    });
 
-  return NextResponse.json({ user });
+    return NextResponse.json({ user });
+  } catch (error) {
+    const status = String(error).includes('FORBIDDEN') ? 403
+      : String(error).includes('Record to update not found') ? 404
+      : 500;
+    return NextResponse.json({ error: String(error) }, { status });
+  }
 }
