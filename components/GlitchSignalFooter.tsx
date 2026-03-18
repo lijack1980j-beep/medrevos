@@ -3,11 +3,11 @@
 import { useState } from 'react';
 
 const navItems = [
-  { label: 'Home',       sup: null,   href: '/' },
-  { label: 'About',      sup: null,   href: '/about' },
-  { label: 'Projects',   sup: '08',   href: '/projects' },
-  { label: 'Journal',    sup: '05',   href: '/journal' },
-  { label: 'Contact us', sup: null,   href: '/contact' },
+  { label: 'Home',       sup: null,   href: 'https://glitchsignal.framer.website/' },
+  { label: 'About',      sup: null,   href: 'https://glitchsignal.framer.website/about' },
+  { label: 'Projects',   sup: '08',   href: 'https://glitchsignal.framer.website/projects' },
+  { label: 'Journal',    sup: '05',   href: 'https://glitchsignal.framer.website/journal' },
+  { label: 'Contact us', sup: null,   href: 'https://glitchsignal.framer.website/contact' },
 ];
 
 const InstagramIcon = () => (
