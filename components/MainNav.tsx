@@ -1,12 +1,15 @@
+'use client';
+
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/auth';
+import { useUser } from '@/components/UserProvider';
 import { LogoutButton } from '@/components/LogoutButton';
 import { NavLinks } from '@/components/NavLinks';
 import { SearchInput } from '@/components/SearchInput';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
-export async function MainNav() {
-  const user = await getCurrentUser();
+export function MainNav() {
+  const { user, loading } = useUser();
+
   return (
     <nav className="nav">
       <div className="nav-inner">
@@ -15,7 +18,7 @@ export async function MainNav() {
         <SearchInput />
         <div className="row">
           <ThemeToggle />
-          {user ? (
+          {loading ? null : user ? (
             <>
               <Link href="/settings" className="muted small-text nav-settings-link">{user.name} · {user.role}</Link>
               <LogoutButton />

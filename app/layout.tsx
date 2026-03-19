@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Press_Start_2P, Space_Mono } from 'next/font/google';
+import { UserProvider } from '@/components/UserProvider';
 import { MainNav } from '@/components/MainNav';
 import { ShortcutModal } from '@/components/ShortcutModal';
 import { PomodoroTimer } from '@/components/PomodoroTimer';
@@ -29,17 +30,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${pressStart2P.variable} ${spaceMono.variable}`}>
       <body>
-        <div className="glow-orb glow-orb-1" />
-        <div className="glow-orb glow-orb-2" />
-        <div className="glow-orb glow-orb-3" />
-        <div className="page-shell">
-          <MainNav />
-          <main className="main-content">{children}</main>
-        </div>
-        <ShortcutModal />
-        <PomodoroTimer />
-        <ServiceWorkerRegister />
-        <ThemeColorApplier />
+        <UserProvider>
+          <div className="glow-orb glow-orb-1" />
+          <div className="glow-orb glow-orb-2" />
+          <div className="glow-orb glow-orb-3" />
+          <div className="page-shell">
+            <MainNav />
+            <main className="main-content">{children}</main>
+          </div>
+          <ShortcutModal />
+          <PomodoroTimer />
+          <ServiceWorkerRegister />
+          <ThemeColorApplier />
+        </UserProvider>
       </body>
     </html>
   );
