@@ -3371,12 +3371,12 @@ textarea:focus, input:focus, select:focus {
 .cm-search { flex: 1; min-width: 180px; padding: 0.45rem 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 0.875rem; outline: none; }
 .cm-search:focus { border-color: var(--accent); }
 .cm-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 560px; overflow-y: auto; padding-right: 2px; }
-.cm-item { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; transition: border-color 0.15s; }
+.cm-item { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); transition: border-color 0.15s; }
 .cm-item:hover { border-color: var(--accent); }
-.cm-item-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.65rem 0.9rem; flex-wrap: wrap; }
-.cm-item-info { display: flex; align-items: baseline; gap: 0.5rem; min-width: 0; flex: 1; flex-wrap: wrap; }
-.cm-item-title { font-size: 0.85rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 60px; }
-.cm-item-actions { display: flex; gap: 0.35rem; flex-shrink: 0; }
+.cm-item-header { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.65rem 0.9rem; }
+.cm-item-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.cm-item-title { font-size: 0.85rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.cm-item-actions { display: flex; gap: 0.35rem; align-self: flex-end; }
 .cm-edit-form { padding: 1rem 1.1rem; border-top: 1px solid var(--border); background: var(--bg); display: flex; flex-direction: column; gap: 0.7rem; }
 .cm-edit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.7rem; }
 .cm-edit-footer { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; }
@@ -3495,9 +3495,6 @@ textarea:focus, input:focus, select:focus {
 .adm-split-right .cm-wrap { margin-top: 0; }
 .adm-split-right .cm-wrap.panel { padding: 0; }
 .adm-split-right .cm-list { max-height: calc(100vh - 260px); }
-.adm-split-right .cm-item-header { flex-direction: column; align-items: stretch; gap: 0.4rem; }
-.adm-split-right .cm-item-info { flex-wrap: nowrap; }
-.adm-split-right .cm-item-actions { align-self: flex-end; }
 @media (max-width: 860px) {
   .adm-split { flex-direction: column; min-height: 0; }
   .adm-split-left { width: 100%; min-width: 0; max-width: none; border-right: none; border-bottom: 1px solid var(--border); }
