@@ -193,9 +193,9 @@ export function AdminShell({ topics, flatTopics, counts }: {
             kicker="Content" title="Topics"
             description="Global topics are visible to all students. Create a topic first, then add lessons, questions, flashcards and cases under it."
             leftLabel="Create topic"
-            left={<AdminForms topics={flatTopics} activeForm="topic" onSaved={refresh} />}
+            left={<AdminForms topics={flatTopics} activeForm="topic" section="create" onSaved={refresh} />}
             rightLabel="Manage topics"
-            right={<AdminForms topics={flatTopics} activeForm="topic" onSaved={refresh} />}
+            right={<AdminForms topics={flatTopics} activeForm="topic" section="manage" onSaved={refresh} />}
           />
         )}
 

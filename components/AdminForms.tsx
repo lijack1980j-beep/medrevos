@@ -9,9 +9,10 @@ type Topic = {
 };
 type FormStatus = { ok: boolean; message: string } | null;
 
-export function AdminForms({ topics, activeForm, onSaved }: {
+export function AdminForms({ topics, activeForm, section, onSaved }: {
   topics: Topic[];
   activeForm?: 'topic' | 'lesson' | 'flashcard' | 'question' | 'case';
+  section?: 'create' | 'manage';
   onSaved?: () => void;
 }) {
   const router = useRouter();
@@ -84,8 +85,14 @@ export function AdminForms({ topics, activeForm, onSaved }: {
   const show = (kind: 'topic' | 'lesson' | 'flashcard' | 'question' | 'case') =>
     !activeForm || activeForm === kind;
 
+  const showCreate = section !== 'manage';
+  const showManage = section !== 'create';
+
   // When activeForm is set, only one form shows — use full width instead of half-grid
   const gridClass = activeForm ? '' : 'grid cols-2';
+
+  // Hide section titles when inside SplitPanel (section prop is set — SplitPanel provides labels)
+  const showTitles = !section;
 
   const filteredTopics = topics.filter(t =>
     !topicSearch ||
@@ -95,110 +102,118 @@ export function AdminForms({ topics, activeForm, onSaved }: {
 
   return (
     <div className="admin-forms-wrap">
-      <div className={gridClass}>
-        {show('topic') && (
-          <form className="panel" onSubmit={(e) => submitForm(e, 'topic')}>
-            <h3>Create topic</h3>
-            <div className="list">
-              <label>Title<input name="title" required /></label>
-              <label>Slug<input name="slug" required /></label>
-              <label>System<input name="system" required /></label>
-              <label>Summary<textarea name="summary" rows={3} /></label>
-              <label>Difficulty (1–5)<input type="number" name="difficulty" min="1" max="5" defaultValue="3" required /></label>
-              <label>Est. minutes<input type="number" name="estMinutes" min="1" max="300" defaultValue="20" required /></label>
-              <label className="admin-checkbox-label">
-                <input type="checkbox" name="highYield" />
-                High Yield
-              </label>
-            </div>
-            <button type="submit" className="btn primary admin-form-btn">Create topic</button>
-            {topicStatus && (
-              <p className={`admin-form-status${topicStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
-                {topicStatus.message}
-              </p>
-            )}
-          </form>
-        )}
 
-        {show('lesson') && (
-          <form className="panel" onSubmit={(e) => submitForm(e, 'lesson')}>
-            <h3>Create lesson</h3>
-            {topics.length === 0 ? (
-              <p className="muted">No topics available. Create a topic first.</p>
-            ) : (
+      {/* Row 1: Topic create + Lesson create */}
+      {((show('topic') && showCreate) || show('lesson')) && (
+        <div className={gridClass}>
+          {show('topic') && showCreate && (
+            <form className="panel" onSubmit={(e) => submitForm(e, 'topic')}>
+              {showTitles && <h3>Create topic</h3>}
               <div className="list">
-                <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
                 <label>Title<input name="title" required /></label>
-                <label>Content<textarea name="content" rows={5} required /></label>
-                <label>Pearls<textarea name="pearls" rows={3} /></label>
-                <label>Pitfalls<textarea name="pitfalls" rows={3} /></label>
-                <button type="submit" className="btn primary admin-form-btn">Save lesson</button>
-                {lessonStatus && (
-                  <p className={`admin-form-status${lessonStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
-                    {lessonStatus.message}
-                  </p>
-                )}
+                <label>Slug<input name="slug" required /></label>
+                <label>System<input name="system" required /></label>
+                <label>Summary<textarea name="summary" rows={3} /></label>
+                <label>Difficulty (1-5)<input type="number" name="difficulty" min="1" max="5" defaultValue="3" required /></label>
+                <label>Est. minutes<input type="number" name="estMinutes" min="1" max="300" defaultValue="20" required /></label>
+                <label className="admin-checkbox-label">
+                  <input type="checkbox" name="highYield" />
+                  High Yield
+                </label>
               </div>
-            )}
-          </form>
-        )}
-      </div>
+              <button type="submit" className="btn primary admin-form-btn">Create topic</button>
+              {topicStatus && (
+                <p className={`admin-form-status${topicStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
+                  {topicStatus.message}
+                </p>
+              )}
+            </form>
+          )}
 
-      <div className={gridClass}>
-        {show('flashcard') && (
-          <form className="panel" onSubmit={(e) => submitForm(e, 'flashcard')}>
-            <h3>Create flashcard</h3>
-            {topics.length === 0 ? (
-              <p className="muted">No topics available. Create a topic first.</p>
-            ) : (
-              <div className="list">
-                <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
-                <label>Front<textarea name="front" rows={3} required /></label>
-                <label>Back<textarea name="back" rows={3} required /></label>
-                <label>Note<textarea name="note" rows={2} /></label>
-                <button type="submit" className="btn primary admin-form-btn">Save flashcard</button>
-                {cardStatus && (
-                  <p className={`admin-form-status${cardStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
-                    {cardStatus.message}
-                  </p>
-                )}
-              </div>
-            )}
-          </form>
-        )}
+          {show('lesson') && (
+            <form className="panel" onSubmit={(e) => submitForm(e, 'lesson')}>
+              {showTitles && <h3>Create lesson</h3>}
+              {topics.length === 0 ? (
+                <p className="muted">No topics available. Create a topic first.</p>
+              ) : (
+                <div className="list">
+                  <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+                  <label>Title<input name="title" required /></label>
+                  <label>Content<textarea name="content" rows={5} required /></label>
+                  <label>Pearls<textarea name="pearls" rows={3} /></label>
+                  <label>Pitfalls<textarea name="pitfalls" rows={3} /></label>
+                  <button type="submit" className="btn primary admin-form-btn">Save lesson</button>
+                  {lessonStatus && (
+                    <p className={`admin-form-status${lessonStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
+                      {lessonStatus.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+      )}
 
-        {show('question') && (
-          <form className="panel" onSubmit={(e) => submitForm(e, 'question')}>
-            <h3>Create question</h3>
-            {topics.length === 0 ? (
-              <p className="muted">No topics available. Create a topic first.</p>
-            ) : (
-              <div className="list">
-                <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
-                <label>Stem<textarea name="stem" rows={4} required /></label>
-                <label>Explanation<textarea name="explanation" rows={3} required /></label>
-                <label>Difficulty (1–5)<input type="number" name="difficulty" min="1" max="5" defaultValue="3" required /></label>
-                <label>Option A<input name="optionA" required /></label>
-                <label>Option B<input name="optionB" required /></label>
-                <label>Option C<input name="optionC" required /></label>
-                <label>Option D<input name="optionD" required /></label>
-                <label>Correct answer<select name="correctLabel" defaultValue="A"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
-                <button type="submit" className="btn primary admin-form-btn">Save question</button>
-                {questionStatus && (
-                  <p className={`admin-form-status${questionStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
-                    {questionStatus.message}
-                  </p>
-                )}
-              </div>
-            )}
-          </form>
-        )}
-      </div>
+      {/* Row 2: Flashcard + Question create */}
+      {(show('flashcard') || show('question')) && (
+        <div className={gridClass}>
+          {show('flashcard') && (
+            <form className="panel" onSubmit={(e) => submitForm(e, 'flashcard')}>
+              {showTitles && <h3>Create flashcard</h3>}
+              {topics.length === 0 ? (
+                <p className="muted">No topics available. Create a topic first.</p>
+              ) : (
+                <div className="list">
+                  <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+                  <label>Front<textarea name="front" rows={3} required /></label>
+                  <label>Back<textarea name="back" rows={3} required /></label>
+                  <label>Note<textarea name="note" rows={2} /></label>
+                  <button type="submit" className="btn primary admin-form-btn">Save flashcard</button>
+                  {cardStatus && (
+                    <p className={`admin-form-status${cardStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
+                      {cardStatus.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form>
+          )}
 
+          {show('question') && (
+            <form className="panel" onSubmit={(e) => submitForm(e, 'question')}>
+              {showTitles && <h3>Create question</h3>}
+              {topics.length === 0 ? (
+                <p className="muted">No topics available. Create a topic first.</p>
+              ) : (
+                <div className="list">
+                  <label>Topic<select name="topicId" required>{topics.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}</select></label>
+                  <label>Stem<textarea name="stem" rows={4} required /></label>
+                  <label>Explanation<textarea name="explanation" rows={3} required /></label>
+                  <label>Difficulty (1-5)<input type="number" name="difficulty" min="1" max="5" defaultValue="3" required /></label>
+                  <label>Option A<input name="optionA" required /></label>
+                  <label>Option B<input name="optionB" required /></label>
+                  <label>Option C<input name="optionC" required /></label>
+                  <label>Option D<input name="optionD" required /></label>
+                  <label>Correct answer<select name="correctLabel" defaultValue="A"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
+                  <button type="submit" className="btn primary admin-form-btn">Save question</button>
+                  {questionStatus && (
+                    <p className={`admin-form-status${questionStatus.ok ? ' admin-form-status--ok' : ' admin-form-status--err'}`}>
+                      {questionStatus.message}
+                    </p>
+                  )}
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Row 3: Case create */}
       {show('case') && (
         <div className={gridClass}>
           <form className="panel" onSubmit={(e) => submitForm(e, 'case')}>
-            <h3>Create case</h3>
+            {showTitles && <h3>Create case</h3>}
             {topics.length === 0 ? (
               <p className="muted">No topics available. Create a topic first.</p>
             ) : (
@@ -223,19 +238,22 @@ export function AdminForms({ topics, activeForm, onSaved }: {
       )}
 
       {/* ── Topic management list (Topics panel only) ── */}
-      {show('topic') && (
-        <div className="panel">
+      {show('topic') && showManage && (
+        <div className={section ? '' : 'panel'}>
           <div className="admin-control-header">
-            <h3>Manage topics <span className="admin-topic-count">({filteredTopics.length})</span></h3>
+            {showTitles
+              ? <h3>Manage topics <span className="admin-topic-count">({filteredTopics.length})</span></h3>
+              : <span className="muted admin-topic-count">{filteredTopics.length} topic{filteredTopics.length !== 1 ? 's' : ''}</span>
+            }
             <div className="admin-topic-toolbar">
               <input
                 type="search"
-                placeholder="Search topics…"
+                placeholder="Search topics..."
                 value={topicSearch}
                 onChange={e => setTopicSearch(e.target.value)}
                 className="admin-topic-search"
               />
-              <button type="button" className="btn secondary" onClick={reseed}>↺ Reseed demo</button>
+              <button type="button" className="btn secondary" onClick={reseed}>Reseed demo</button>
             </div>
           </div>
 
@@ -300,7 +318,7 @@ export function AdminForms({ topics, activeForm, onSaved }: {
                         <label>Title<input name="title" defaultValue={topic.title} required /></label>
                         <label>Slug<input name="slug" defaultValue={topic.slug} required /></label>
                         <label>System<input name="system" defaultValue={topic.system} required /></label>
-                        <label>Difficulty (1–5)<input type="number" name="difficulty" min="1" max="5" defaultValue={topic.difficulty} required /></label>
+                        <label>Difficulty (1-5)<input type="number" name="difficulty" min="1" max="5" defaultValue={topic.difficulty} required /></label>
                         <label>Est. minutes<input type="number" name="estMinutes" min="1" max="300" defaultValue={topic.estMinutes} required /></label>
                         <label className="admin-checkbox-label">
                           <input type="checkbox" name="highYield" defaultChecked={topic.highYield} />

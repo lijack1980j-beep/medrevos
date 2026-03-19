@@ -1269,20 +1269,19 @@ textarea:focus, input:focus, select:focus {
 .admin-form-status { margin-top: 10px; font-size: 13px; font-weight: 500; }
 .admin-form-status--ok  { color: var(--green, #4ade80); }
 .admin-form-status--err { color: var(--red, #f87171); }
-.admin-control-header { display: flex; justify-content: space-between; align-items: center; }
-.admin-topic-row { display: flex; justify-content: space-between; align-items: center; }
-
+.admin-control-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.admin-topic-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; gap: 12px; }
 
 /* Admin page */
 .admin-page { display: flex; flex-direction: column; gap: 18px; }
 .admin-forms-wrap { display: flex; flex-direction: column; gap: 18px; }
-.admin-topic-list { display: flex; flex-direction: column; gap: 0; margin-top: 12px; }
+.admin-topic-list { display: flex; flex-direction: column; gap: 0; margin-top: 8px; }
 .admin-topic-entry { border-top: 1px solid rgba(255,255,255,0.06); }
 .admin-topic-entry:last-child { border-bottom: 1px solid rgba(255,255,255,0.06); }
-.admin-topic-info { display: flex; flex-direction: column; gap: 2px; }
-.admin-topic-name { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); }
-.admin-topic-meta { font-size: 12px; color: rgba(255,255,255,0.4); }
-.admin-topic-actions { display: flex; gap: 8px; }
+.admin-topic-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.admin-topic-name { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-topic-meta { font-size: 12px; color: rgba(255,255,255,0.4); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.admin-topic-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
 .btn--danger { border-color: rgba(248,113,113,0.3); color: #f87171; }
 .btn--danger:hover { background: rgba(248,113,113,0.1); border-color: rgba(248,113,113,0.5); }
 .admin-edit-form { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
@@ -3463,4 +3462,94 @@ textarea:focus, input:focus, select:focus {
 .adm-user-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 .adm-user-badges { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
 [data-theme="light"] .adm-create-section { border-color: #e5e7eb; }
+
+/* ── SplitPanel layout ──────────────────────────────────────────────────── */
+.adm-panel-header--pad { padding: 1.25rem 1.5rem 0; }
+.adm-split {
+  display: flex; flex: 1; min-height: 0;
+  border-top: 1px solid var(--border);
+}
+.adm-split-left {
+  width: 40%; min-width: 300px; padding: 0.75rem;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+.adm-split-right {
+  flex: 1; min-width: 0; padding: 0.75rem;
+  overflow-y: auto;
+}
+/* Remove child .panel padding inside split columns — the column provides spacing */
+.adm-split-left .panel,
+.adm-split-right .panel { padding: 16px; }
+.adm-split-left .admin-forms-wrap,
+.adm-split-right .admin-forms-wrap { gap: 12px; }
+/* ContentManager nested inside split right */
+.adm-split-right .cm-wrap { margin-top: 0; }
+.adm-split-right .cm-wrap.panel { padding: 0; }
+.adm-split-right .cm-header { padding: 0 0 0.5rem; }
+.adm-split-right .cm-list { max-height: calc(100vh - 280px); }
+@media (max-width: 860px) {
+  .adm-split { flex-direction: column; }
+  .adm-split-left { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid var(--border); }
+}
+
+/* ── Overview quick-action cards ─────────────────────────────────────────── */
+.adm-overview-section { padding: 0; }
+.adm-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+.adm-quick-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+  padding: 14px 16px; border-radius: 12px; cursor: pointer;
+  border: 1px solid transparent; background: rgba(255,255,255,0.03);
+  text-align: left; transition: transform 0.15s, border-color 0.15s, background 0.15s;
+}
+.adm-quick-card:hover { transform: translateY(-2px); }
+.adm-quick-icon { font-size: 1.5rem; }
+.adm-quick-label { font-size: 0.875rem; font-weight: 600; }
+.adm-quick-desc { font-size: 0.75rem; color: var(--muted); }
+
+/* Quick-card color variants */
+.adm-quick-card--purple { border-color: rgba(167,139,250,0.25); color: #a78bfa; }
+.adm-quick-card--purple:hover { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.5); }
+.adm-quick-card--blue { border-color: rgba(96,165,250,0.25); color: var(--accent); }
+.adm-quick-card--blue:hover { background: rgba(96,165,250,0.1); border-color: rgba(96,165,250,0.5); }
+.adm-quick-card--green { border-color: rgba(52,211,153,0.25); color: #34d399; }
+.adm-quick-card--green:hover { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.5); }
+.adm-quick-card--amber { border-color: rgba(245,158,11,0.25); color: #f59e0b; }
+.adm-quick-card--amber:hover { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.5); }
+.adm-quick-card--pink { border-color: rgba(244,114,182,0.25); color: #f472b6; }
+.adm-quick-card--pink:hover { background: rgba(244,114,182,0.1); border-color: rgba(244,114,182,0.5); }
+.adm-quick-card--indigo { border-color: rgba(99,102,241,0.25); color: #818cf8; }
+.adm-quick-card--indigo:hover { background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.5); }
+.adm-quick-card--cyan { border-color: rgba(34,211,238,0.25); color: var(--cyan); }
+.adm-quick-card--cyan:hover { background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.5); }
+.adm-quick-card--rose { border-color: rgba(251,113,133,0.25); color: #fb7185; }
+.adm-quick-card--rose:hover { background: rgba(251,113,133,0.1); border-color: rgba(251,113,133,0.5); }
+
+/* Light overrides — SplitPanel & quick cards */
+[data-theme="light"] .adm-split { border-color: #e5e7eb; }
+[data-theme="light"] .adm-split-left { border-color: #e5e7eb; }
+[data-theme="light"] .adm-quick-card { background: #f9fafb; }
+[data-theme="light"] .adm-quick-card:hover { background: #f3f4f6; }
 [data-theme="light"] .adm-manage-section { border-color: #e5e7eb; }
+
+/* Light overrides — Admin forms & topic list */
+[data-theme="light"] .admin-topic-entry { border-color: #e5e7eb; }
+[data-theme="light"] .admin-topic-name { color: #111827; }
+[data-theme="light"] .admin-topic-meta { color: #6b7280; }
+[data-theme="light"] .admin-edit-form { background: #f3f4f6; }
+[data-theme="light"] .admin-topic-search { background: #fff; color: #111; border-color: #e5e7eb; }
+[data-theme="light"] .admin-topic-row { border-color: #e5e7eb; }
+
+/* Light overrides — ContentLibrary */
+[data-theme="light"] .cl-topic-header { background: #f9fafb; }
+[data-theme="light"] .cl-topic-header:hover { background: #f3f4f6; }
+[data-theme="light"] .cl-topic-section { border-color: #e5e7eb; }
+[data-theme="light"] .cl-item { border-color: #e5e7eb; }
+[data-theme="light"] .cl-item-front { color: #111827; }
+[data-theme="light"] .cl-edit-form { background: #f3f4f6; border-color: #e5e7eb; }
+[data-theme="light"] .cl-tab { color: #6b7280; }
+[data-theme="light"] .cl-tab--active { color: var(--accent); border-color: var(--accent); }

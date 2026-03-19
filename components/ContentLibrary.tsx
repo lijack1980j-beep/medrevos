@@ -17,6 +17,7 @@ type FormStatus = { ok: boolean; message: string } | null;
 function FlashcardRow({ card }: { card: Flashcard }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState<FormStatus>(null);
 
   async function save(e: React.FormEvent<HTMLFormElement>) {
@@ -33,7 +34,6 @@ function FlashcardRow({ card }: { card: Flashcard }) {
   }
 
   async function remove() {
-    if (!confirm('Delete this flashcard?')) return;
     const res = await fetch('/api/admin/content', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -51,10 +51,17 @@ function FlashcardRow({ card }: { card: Flashcard }) {
           <span className="cl-item-back muted">{card.back}</span>
         </div>
         <div className="cl-item-actions">
-          <button type="button" className="btn cl-btn-sm" onClick={() => { setEditing(v => !v); setStatus(null); }}>
+          <button type="button" className="btn cl-btn-sm" onClick={() => { setEditing(v => !v); setStatus(null); setConfirming(false); }}>
             {editing ? 'Cancel' : 'Edit'}
           </button>
-          <button type="button" className="btn btn--danger cl-btn-sm" onClick={remove}>Delete</button>
+          {confirming ? (
+            <>
+              <button type="button" className="btn btn--danger cl-btn-sm" onClick={remove}>Confirm</button>
+              <button type="button" className="btn secondary cl-btn-sm" onClick={() => setConfirming(false)}>Cancel</button>
+            </>
+          ) : (
+            <button type="button" className="btn btn--danger cl-btn-sm" onClick={() => { setConfirming(true); setEditing(false); }}>Delete</button>
+          )}
         </div>
       </div>
 
@@ -76,6 +83,7 @@ function FlashcardRow({ card }: { card: Flashcard }) {
 function QuestionRow({ q }: { q: Question }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [status, setStatus] = useState<FormStatus>(null);
 
   const optMap: Record<string, string> = {};
@@ -96,7 +104,6 @@ function QuestionRow({ q }: { q: Question }) {
   }
 
   async function remove() {
-    if (!confirm('Delete this question and all its options?')) return;
     const res = await fetch('/api/admin/content', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
@@ -109,14 +116,21 @@ function QuestionRow({ q }: { q: Question }) {
     <div className="cl-item">
       <div className="cl-item-row">
         <div className="cl-item-preview">
-          <span className="cl-item-front">{q.stem.length > 100 ? q.stem.slice(0, 100) + '…' : q.stem}</span>
-          <span className={`badge cl-diff-badge`}>Diff {q.difficulty}/5</span>
+          <span className="cl-item-front">{q.stem.length > 100 ? q.stem.slice(0, 100) + '...' : q.stem}</span>
+          <span className="badge cl-diff-badge">Diff {q.difficulty}/5</span>
         </div>
         <div className="cl-item-actions">
-          <button type="button" className="btn cl-btn-sm" onClick={() => { setEditing(v => !v); setStatus(null); }}>
+          <button type="button" className="btn cl-btn-sm" onClick={() => { setEditing(v => !v); setStatus(null); setConfirming(false); }}>
             {editing ? 'Cancel' : 'Edit'}
           </button>
-          <button type="button" className="btn btn--danger cl-btn-sm" onClick={remove}>Delete</button>
+          {confirming ? (
+            <>
+              <button type="button" className="btn btn--danger cl-btn-sm" onClick={remove}>Confirm</button>
+              <button type="button" className="btn secondary cl-btn-sm" onClick={() => setConfirming(false)}>Cancel</button>
+            </>
+          ) : (
+            <button type="button" className="btn btn--danger cl-btn-sm" onClick={() => { setConfirming(true); setEditing(false); }}>Delete</button>
+          )}
         </div>
       </div>
 
