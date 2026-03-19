@@ -5,6 +5,10 @@ import { prisma } from '@/lib/db';
 export const SESSION_COOKIE = 'medrev_session';
 
 export async function createSession(userId: string) {
+  // Destroy any existing session first (prevents ghost sessions when switching accounts)
+  const oldToken = cookies().get(SESSION_COOKIE)?.value;
+  if (oldToken) await prisma.session.deleteMany({ where: { token: oldToken } });
+
   const token = randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 14);
   await prisma.session.create({ data: { token, userId, expiresAt } });

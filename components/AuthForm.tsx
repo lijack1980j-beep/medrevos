@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
-  const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -20,10 +19,9 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
     });
     const data = await response.json();
-    setBusy(false);
-    if (!response.ok) return setError(data.message || 'Request failed.');
-    router.push((params.get('next') ?? '/dashboard') as Parameters<typeof router.push>[0]);
-    router.refresh();
+    if (!response.ok) { setBusy(false); return setError(data.message || 'Request failed.'); }
+    // Hard navigation to fully clear Next.js Router Cache — prevents stale data from previous account
+    window.location.href = params.get('next') ?? '/dashboard';
   }
 
   return (

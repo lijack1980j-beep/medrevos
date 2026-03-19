@@ -15,6 +15,8 @@ export async function POST(request: Request) {
     if (!user || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ message: 'Invalid credentials.' }, { status: 401 });
     }
+    // Clean up any expired sessions for this user to prevent ghost session buildup
+    await prisma.session.deleteMany({ where: { userId: user.id, expiresAt: { lt: new Date() } } });
     await createSession(user.id);
     return NextResponse.json({ ok: true });
   } catch (error) {
