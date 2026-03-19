@@ -18,9 +18,11 @@ export default async function CalendarPage() {
   const [flashcardStates, questionSRS, attempts, reviews, calendarEvents] = await Promise.all([
     prisma.userFlashcardState.findMany({
       where: { userId: user.id, dueDate: { lte: endDate } },
+      select: { dueDate: true },
     }),
     prisma.questionSRSState.findMany({
       where: { userId: user.id, dueDate: { lte: endDate } },
+      select: { dueDate: true },
     }),
     prisma.questionAttempt.findMany({
       where: { userId: user.id, createdAt: { gte: new Date(today.getTime() - 30 * 86400000) } },
@@ -32,6 +34,7 @@ export default async function CalendarPage() {
     }),
     prisma.calendarEvent.findMany({
       where: { userId: user.id },
+      select: { id: true, type: true, title: true, dateStr: true, note: true, color: true },
       orderBy: { dateStr: 'asc' },
     }),
   ]);
@@ -41,24 +44,25 @@ export default async function CalendarPage() {
     ...reviews.map(r => r.reviewedAt.toISOString().slice(0, 10)),
   ]);
 
-  // Build cumulative due counts per day
-  const allCardsDue = flashcardStates.map(s => { const d = new Date(s.dueDate); d.setHours(0,0,0,0); return d; });
-  const allQsDue    = questionSRS.map(s => { const d = new Date(s.dueDate); d.setHours(0,0,0,0); return d; });
+  // Build per-day due counts using a date-string bucket map (O(n+m) instead of O(n*m))
+  const cardDueBuckets: Record<string, number> = {};
+  for (const s of flashcardStates) {
+    const d = new Date(s.dueDate); d.setHours(0, 0, 0, 0);
+    const key = d < today ? today.toISOString().slice(0, 10) : d.toISOString().slice(0, 10);
+    cardDueBuckets[key] = (cardDueBuckets[key] ?? 0) + 1;
+  }
+  const qDueBuckets: Record<string, number> = {};
+  for (const s of questionSRS) {
+    const d = new Date(s.dueDate); d.setHours(0, 0, 0, 0);
+    const key = d < today ? today.toISOString().slice(0, 10) : d.toISOString().slice(0, 10);
+    qDueBuckets[key] = (qDueBuckets[key] ?? 0) + 1;
+  }
 
   const days: DayData[] = [];
-  let prevCards = 0, prevQs = 0;
-
   for (let i = 0; i < 30; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const dStr = d.toISOString().slice(0, 10);
-
-    const cumCards = allCardsDue.filter(dd => dd <= d).length;
-    const cumQs    = allQsDue.filter(dd => dd <= d).length;
-    const dueCards     = i === 0 ? cumCards : Math.max(0, cumCards - prevCards);
-    const dueQuestions = i === 0 ? cumQs    : Math.max(0, cumQs - prevQs);
-    prevCards = cumCards;
-    prevQs    = cumQs;
 
     days.push({
       dateStr: dStr,
@@ -66,8 +70,8 @@ export default async function CalendarPage() {
       monthIdx: d.getMonth(),
       isToday: i === 0,
       studiedPast: studiedDays.has(dStr),
-      dueCards,
-      dueQuestions,
+      dueCards: cardDueBuckets[dStr] ?? 0,
+      dueQuestions: qDueBuckets[dStr] ?? 0,
     });
   }
 

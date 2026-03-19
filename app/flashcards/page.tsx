@@ -21,10 +21,13 @@ export default async function FlashcardsPage({
   const [allCards, states, allTopics] = await Promise.all([
     prisma.flashcard.findMany({
       where: { topic: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] } },
-      include: { topic: { select: { title: true, slug: true, system: true } } },
+      select: { id: true, front: true, back: true, note: true, topicId: true, createdAt: true, topic: { select: { title: true, slug: true, system: true } } },
       orderBy: { createdAt: 'asc' },
     }),
-    prisma.userFlashcardState.findMany({ where: { userId: user.id } }),
+    prisma.userFlashcardState.findMany({
+      where: { userId: user.id },
+      select: { flashcardId: true, dueDate: true, intervalDays: true, easeFactor: true, repetitions: true },
+    }),
     prisma.topic.findMany({ where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] }, select: { id: true, title: true, system: true }, orderBy: { title: 'asc' } }),
   ]);
 

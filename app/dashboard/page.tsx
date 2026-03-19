@@ -12,30 +12,44 @@ import { calculateStreak, percent, readinessScore } from '@/lib/analytics';
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
 
-  const [topics, questionCount, attempts, reviews, progress, caseCount, totalCards, dueStateCount] = await Promise.all([
+  const [
+    topics, questionCount, caseCount, totalCards,
+    correctCount, totalAttempts, todayAttemptCount,
+    reviewDates, todayReviewCount,
+    progress, dueStateCount, reviewedCardCount,
+  ] = await Promise.all([
     prisma.topic.count(),
     prisma.question.count(),
-    prisma.questionAttempt.findMany({ where: { userId: user.id }, include: { question: { include: { topic: true } } } }),
-    prisma.flashcardReview.findMany({ where: { userId: user.id }, orderBy: { reviewedAt: 'desc' } }),
-    prisma.userTopicProgress.findMany({ where: { userId: user.id }, include: { topic: true }, orderBy: { masteryPercent: 'asc' } }),
     prisma.caseStudy.count(),
     prisma.flashcard.count(),
+    prisma.questionAttempt.count({ where: { userId: user.id, isCorrect: true } }),
+    prisma.questionAttempt.count({ where: { userId: user.id } }),
+    prisma.questionAttempt.count({ where: { userId: user.id, createdAt: { gte: todayStart } } }),
+    prisma.flashcardReview.findMany({
+      where: { userId: user.id },
+      select: { reviewedAt: true },
+      distinct: ['reviewedAt'],
+      orderBy: { reviewedAt: 'desc' },
+    }),
+    prisma.flashcardReview.count({ where: { userId: user.id, reviewedAt: { gte: todayStart } } }),
+    prisma.userTopicProgress.findMany({
+      where: { userId: user.id },
+      select: { masteryPercent: true, topic: { select: { title: true, slug: true } } },
+      orderBy: { masteryPercent: 'asc' },
+      take: 4,
+    }),
     prisma.userFlashcardState.count({ where: { userId: user.id, dueDate: { lte: new Date() } } }),
+    prisma.userFlashcardState.count({ where: { userId: user.id } }),
   ]);
 
-  const reviewedCardCount = await prisma.userFlashcardState.count({ where: { userId: user.id } });
   const dueCards = dueStateCount + Math.max(0, totalCards - reviewedCardCount);
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const todayAttempts = attempts.filter(a => a.createdAt.toISOString().slice(0, 10) === todayStr).length;
-
-  const correct = attempts.filter(a => a.isCorrect).length;
-  const accuracy = percent(correct, attempts.length);
-  const uniqueStudyDays = reviews.map(r => r.reviewedAt.toISOString().slice(0, 10));
+  const accuracy = percent(correctCount, totalAttempts);
+  const uniqueStudyDays = reviewDates.map(r => r.reviewedAt.toISOString().slice(0, 10));
   const streak = calculateStreak(uniqueStudyDays);
   const readiness = readinessScore(accuracy, dueCards, streak);
-  const weakTopics = progress.slice(0, 4);
+  const weakTopics = progress;
   const weakestTopic = weakTopics[0];
 
   const actions = [
@@ -73,17 +87,13 @@ export default async function DashboardPage() {
     ? Math.max(0, Math.ceil((new Date(examDate).getTime() - new Date().setHours(0,0,0,0)) / 86_400_000))
     : null;
 
-  // Urgency-weighted targets: more Qs/cards as exam approaches
   const urgency = daysToExam == null ? 'normal' : daysToExam <= 30 ? 'high' : daysToExam <= 90 ? 'medium' : 'normal';
   const qTarget    = urgency === 'high' ? 30 : urgency === 'medium' ? 20 : 10;
   const cardTarget = urgency === 'high' ? 50 : urgency === 'medium' ? 30 : 20;
-  const todayCards = reviews.filter(r => r.reviewedAt.toISOString().slice(0, 10) === todayStr).length;
-  const qDone      = todayAttempts;
-  const cardsDone  = todayCards;
 
   const planItems: { label: string; done: number; target: number; href: string; icon: string }[] = [
-    { label: 'Flashcards', done: cardsDone, target: Math.max(cardTarget, Math.min(dueCards, cardTarget * 2)), href: '/flashcards', icon: '⚡' },
-    { label: 'MCQ questions', done: qDone, target: qTarget, href: '/questions', icon: '📝' },
+    { label: 'Flashcards', done: todayReviewCount, target: Math.max(cardTarget, Math.min(dueCards, cardTarget * 2)), href: '/flashcards', icon: '⚡' },
+    { label: 'MCQ questions', done: todayAttemptCount, target: qTarget, href: '/questions', icon: '📝' },
     ...(weakestTopic
       ? [{ label: `Study: ${weakestTopic.topic.title}`, done: weakestTopic.masteryPercent >= 70 ? 1 : 0, target: 1, href: `/study?topic=${weakestTopic.topic.slug}`, icon: '🎯' }]
       : []),
@@ -112,12 +122,12 @@ export default async function DashboardPage() {
 
       <section className="grid cols-4">
         <StatCard title="Readiness"    value={`${readiness}%`}  helper="Blends accuracy, streak, and due load"    trend={readiness >= 70 ? 'up' : readiness >= 40 ? 'neutral' : 'down'} gradient="blue" />
-        <StatCard title="Accuracy"     value={`${accuracy}%`}   helper={`${correct} correct of ${attempts.length}`} trend={accuracy >= 70 ? 'up' : accuracy >= 40 ? 'neutral' : 'down'} gradient="purple" />
+        <StatCard title="Accuracy"     value={`${accuracy}%`}   helper={`${correctCount} correct of ${totalAttempts}`} trend={accuracy >= 70 ? 'up' : accuracy >= 40 ? 'neutral' : 'down'} gradient="purple" />
         <StatCard title="Study Streak" value={`${streak}d`}     helper="Consecutive active days"                  trend={streak > 0 ? 'up' : 'neutral'} gradient="green" />
         <StatCard title="Due Cards"    value={dueCards}          helper="In your personal queue"                   trend={dueCards < 10 ? 'up' : dueCards < 30 ? 'neutral' : 'down'} gradient="orange" />
       </section>
 
-      <DailyGoalWidget todayAttempts={todayAttempts} />
+      <DailyGoalWidget todayAttempts={todayAttemptCount} />
 
       {/* ── Study planner ── */}
       <div className="panel sp-panel">
@@ -164,7 +174,7 @@ export default async function DashboardPage() {
           </div>
           <div className="dash-topic-list">
             {weakTopics.length ? weakTopics.map((entry, i) => (
-              <div key={entry.id} className="dash-topic-row">
+              <div key={entry.topic.slug} className="dash-topic-row">
                 <div className={`dash-topic-rank${i < 2 ? ' dash-topic-rank--crit' : ' dash-topic-rank--warn'}`}>
                   {i + 1}
                 </div>

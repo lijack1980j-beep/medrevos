@@ -68,6 +68,8 @@ model Session {
   expiresAt    DateTime
   createdAt    DateTime @default(now())
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Topic {
@@ -89,6 +91,8 @@ model Topic {
   cases            CaseStudy[]
   progress         UserTopicProgress[]
   notes            TopicNote[]
+
+  @@index([assignedToUserId])
 }
 
 model Lesson {
@@ -101,6 +105,8 @@ model Lesson {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@index([topicId])
 }
 
 model Question {
@@ -120,6 +126,8 @@ model Question {
   bookmarks       Bookmark[]
   examAnswers     ExamAnswer[]
   srsStates       QuestionSRSState[]
+
+  @@index([topicId])
 }
 
 model QuestionOption {
@@ -129,6 +137,8 @@ model QuestionOption {
   text        String
   isCorrect   Boolean  @default(false)
   question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
 }
 
 model Flashcard {
@@ -149,6 +159,9 @@ model Flashcard {
   author          User?         @relation("CustomFlashcards", fields: [authorId], references: [id], onDelete: SetNull)
   reviewHistory   FlashcardReview[]
   userStates      UserFlashcardState[]
+
+  @@index([topicId])
+  @@index([dueDate])
 }
 
 model FlashcardReview {
@@ -160,6 +173,9 @@ model FlashcardReview {
   nextDueDate  DateTime
   flashcard    Flashcard    @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, reviewedAt])
 }
 
 model QuestionAttempt {
@@ -171,6 +187,10 @@ model QuestionAttempt {
   createdAt   DateTime @default(now())
   question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isCorrect])
+  @@index([userId, createdAt])
 }
 
 model QuestionSRSState {

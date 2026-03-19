@@ -10,29 +10,36 @@ export default async function StudyPage({ searchParams }: { searchParams?: { top
   const user = await getCurrentUser();
   checkAccess(user, 'study');
 
-  const topics = await prisma.topic.findMany({
-    where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user!.id }] },
-    include: {
-      lessons: true,
-      _count: { select: { flashcards: true, questions: true } },
-    },
-    orderBy: [{ highYield: 'desc' }, { title: 'asc' }],
-  });
+  const [topics, progressRows] = await Promise.all([
+    prisma.topic.findMany({
+      where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user!.id }] },
+      select: {
+        id: true, slug: true, title: true, system: true, summary: true,
+        difficulty: true, estMinutes: true, highYield: true,
+        _count: { select: { flashcards: true, questions: true } },
+      },
+      orderBy: [{ highYield: 'desc' }, { title: 'asc' }],
+    }),
+    user
+      ? prisma.userTopicProgress.findMany({ where: { userId: user.id }, select: { topicId: true, masteryPercent: true } })
+      : Promise.resolve([]),
+  ]);
+
+  const progressMap: Record<string, number> = Object.fromEntries(progressRows.map(p => [p.topicId, p.masteryPercent]));
 
   const active = searchParams?.topic
     ? topics.find(t => t.slug === searchParams.topic)
     : topics[0];
-  const lesson = active?.lessons[0];
 
+  let lesson = null;
   let noteContent = '';
-  let progressMap: Record<string, number> = {};
-  if (user && active) {
-    const [note, progressRows] = await Promise.all([
-      prisma.topicNote.findUnique({ where: { userId_topicId: { userId: user.id, topicId: active.id } } }),
-      prisma.userTopicProgress.findMany({ where: { userId: user.id }, select: { topicId: true, masteryPercent: true } }),
+  if (active) {
+    const [lessonRow, noteRow] = await Promise.all([
+      prisma.lesson.findFirst({ where: { topicId: active.id }, orderBy: { createdAt: 'asc' } }),
+      user ? prisma.topicNote.findUnique({ where: { userId_topicId: { userId: user.id, topicId: active.id } } }) : null,
     ]);
-    noteContent = note?.content ?? '';
-    progressMap = Object.fromEntries(progressRows.map(p => [p.topicId, p.masteryPercent]));
+    lesson = lessonRow;
+    noteContent = noteRow?.content ?? '';
   }
 
   return (
