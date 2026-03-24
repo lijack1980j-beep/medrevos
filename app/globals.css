@@ -3527,6 +3527,8 @@ textarea:focus, input:focus, select:focus {
 .adm-quick-card--green:hover { background: rgba(52,211,153,0.1); border-color: rgba(52,211,153,0.5); }
 .adm-quick-card--amber { border-color: rgba(245,158,11,0.25); color: #f59e0b; }
 .adm-quick-card--amber:hover { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.5); }
+.adm-quick-card--orange { border-color: rgba(249,115,22,0.25); color: #fb923c; }
+.adm-quick-card--orange:hover { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.5); }
 .adm-quick-card--pink { border-color: rgba(244,114,182,0.25); color: #f472b6; }
 .adm-quick-card--pink:hover { background: rgba(244,114,182,0.1); border-color: rgba(244,114,182,0.5); }
 .adm-quick-card--indigo { border-color: rgba(99,102,241,0.25); color: #818cf8; }
@@ -3535,6 +3537,22 @@ textarea:focus, input:focus, select:focus {
 .adm-quick-card--cyan:hover { background: rgba(34,211,238,0.1); border-color: rgba(34,211,238,0.5); }
 .adm-quick-card--rose { border-color: rgba(251,113,133,0.25); color: #fb7185; }
 .adm-quick-card--rose:hover { background: rgba(251,113,133,0.1); border-color: rgba(251,113,133,0.5); }
+
+.adm-upload-panel { display: flex; flex-direction: column; gap: 1rem; max-width: 760px; }
+.adm-upload-head h3 { margin: 0; }
+.adm-upload-copy { margin: 0.35rem 0 0; }
+.adm-upload-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
+.adm-upload-file { display: flex; flex-direction: column; gap: 0.35rem; }
+.adm-upload-file-name { font-size: 0.82rem; }
+.adm-upload-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+}
+[data-theme="light"] .adm-upload-hint { background: #fff; border-color: #e5e7eb; }
 
 /* Light overrides — SplitPanel & quick cards */
 [data-theme="light"] .adm-split { border-color: #e5e7eb; }
@@ -3560,3 +3578,7 @@ textarea:focus, input:focus, select:focus {
 [data-theme="light"] .cl-edit-form { background: #f3f4f6; border-color: #e5e7eb; }
 [data-theme="light"] .cl-tab { color: #6b7280; }
 [data-theme="light"] .cl-tab--active { color: var(--accent); border-color: var(--accent); }
+
+@media (max-width: 720px) {
+  .adm-upload-grid { grid-template-columns: 1fr; }
+}

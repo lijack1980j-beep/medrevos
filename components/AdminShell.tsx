@@ -6,6 +6,7 @@ import { ContentLibrary } from '@/components/ContentLibrary';
 import { AIGeneratorPanel } from '@/components/AIGeneratorPanel';
 import { ContentManager } from '@/components/ContentManager';
 import { UserContentPanel } from '@/components/UserContentPanel';
+import { AdminJsonUpload } from '@/components/AdminJsonUpload';
 import { SECTIONS } from '@/lib/access';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -31,7 +32,7 @@ type Counts = [number, number, number, number, number];
 type PanelId =
   | 'overview' | 'users' | 'user-content'
   | 'topics' | 'lessons' | 'questions' | 'flashcards' | 'cases'
-  | 'ai' | 'library';
+  | 'uploads' | 'ai' | 'library';
 
 const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = [
   { id: 'overview',   label: 'Overview',        icon: '📊' },
@@ -41,6 +42,7 @@ const SIDEBAR: { id: PanelId; label: string; icon: string; group?: string }[] = 
   { id: 'questions',  label: 'Questions',       icon: '📝', group: 'Content' },
   { id: 'flashcards', label: 'Flashcards',      icon: '🃏', group: 'Content' },
   { id: 'cases',      label: 'Cases',           icon: '🩺', group: 'Content' },
+  { id: 'uploads',    label: 'JSON Uploads',    icon: '📤', group: 'Tools' },
   { id: 'ai',         label: 'AI Generator',    icon: '🤖', group: 'Tools' },
   { id: 'library',    label: 'Content Library', icon: '📚', group: 'Tools' },
 ];
@@ -243,6 +245,17 @@ export function AdminShell({ topics, flatTopics, counts }: {
           />
         )}
 
+        {panel === 'uploads' && (
+          <div className="adm-panel">
+            <div className="adm-panel-header">
+              <div className="kicker">Tools</div>
+              <h2>JSON Uploads</h2>
+              <p className="muted">Bulk import lesson, flashcard, or MSQ / MCQ JSON files into any global topic.</p>
+            </div>
+            <AdminJsonUpload topics={flatTopics} onSaved={refresh} />
+          </div>
+        )}
+
         {panel === 'ai'      && <AIGeneratorPanel topics={flatTopics} />}
         {panel === 'library' && <ContentLibrary topics={topics} />}
 
@@ -258,6 +271,7 @@ const QUICK_ACTIONS: { id: PanelId; icon: string; label: string; desc: string; c
   { id: 'questions',  icon: '📝', label: 'Questions',        desc: 'Build MCQs → Q-Bank',              color: 'green'  },
   { id: 'flashcards', icon: '🃏', label: 'Flashcards',       desc: 'SRS cards → Flashcards page',      color: 'amber'  },
   { id: 'cases',      icon: '🩺', label: 'Cases',            desc: 'Clinical cases → Cases page',      color: 'pink'   },
+  { id: 'uploads',    icon: '📤', label: 'JSON Uploads',     desc: 'Bulk import lesson/card/question files', color: 'orange' },
   { id: 'ai',         icon: '🤖', label: 'AI Generator',     desc: 'Generate from notes',              color: 'indigo' },
   { id: 'users',      icon: '👥', label: 'Users',            desc: 'Manage access & roles',            color: 'cyan'   },
   { id: 'library',    icon: '📚', label: 'Content Library',  desc: 'Browse all content',               color: 'rose'   },

@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
 
+const questionLabels = ['A', 'B', 'C', 'D'] as const;
+
 const topicSchema        = z.object({ kind: z.literal('topic'), title: z.string().min(1), slug: z.string().min(1), system: z.string().min(1), summary: z.string().default(''), difficulty: z.coerce.number().min(1).max(5), estMinutes: z.coerce.number().min(1).max(300), highYield: z.coerce.boolean().optional() });
 const topicEditSchema    = z.object({ id: z.string().min(1), title: z.string().min(1), slug: z.string().min(1), system: z.string().min(1), summary: z.string().default(''), difficulty: z.coerce.number().min(1).max(5), estMinutes: z.coerce.number().min(1).max(300), highYield: z.coerce.boolean().optional() });
 const lessonSchema       = z.object({ kind: z.literal('lesson'), topicId: z.string().min(1), title: z.string().min(1), content: z.string().min(1), pearls: z.string().default(''), pitfalls: z.string().default('') });
@@ -16,6 +18,90 @@ const questionEditSchema = z.object({ kind: z.literal('question'), id: z.string(
 const caseSchema         = z.object({ kind: z.literal('case'), topicId: z.string().min(1), title: z.string().min(1), chiefComplaint: z.string().min(1), findings: z.string().min(1), investigations: z.string().min(1), diagnosis: z.string().min(1), management: z.string().min(1) });
 const caseEditSchema     = z.object({ kind: z.literal('case'), id: z.string().min(1), title: z.string().min(1), chiefComplaint: z.string().min(1), findings: z.string().min(1), investigations: z.string().min(1), diagnosis: z.string().min(1), management: z.string().min(1) });
 const deleteSchema       = z.object({ kind: z.enum(['topic', 'lesson', 'flashcard', 'question', 'case']), id: z.string().min(1) });
+const importJsonSchema   = z.object({
+  kind: z.literal('import-json'),
+  contentKind: z.enum(['lesson', 'flashcard', 'question']),
+  topicId: z.string().min(1),
+  items: z.array(z.unknown()).min(1),
+});
+
+const importedLessonSchema = z.object({
+  title: z.string().min(1),
+  content: z.string().min(1),
+  pearls: z.string().optional().nullable(),
+  pitfalls: z.string().optional().nullable(),
+});
+
+const importedFlashcardSchema = z.object({
+  front: z.string().min(1),
+  back: z.string().min(1),
+  note: z.string().optional().nullable(),
+});
+
+const importedQuestionSchema = z.object({
+  stem: z.string().min(1),
+  explanation: z.string().optional().nullable(),
+  difficulty: z.coerce.number().min(1).max(5).optional(),
+  optionA: z.string().optional(),
+  optionB: z.string().optional(),
+  optionC: z.string().optional(),
+  optionD: z.string().optional(),
+  correctLabel: z.enum(questionLabels).optional(),
+  correctOption: z.enum(questionLabels).optional(),
+  answer: z.enum(questionLabels).optional(),
+  correctAnswer: z.string().optional(),
+  options: z.array(z.object({
+    label: z.string().optional(),
+    text: z.string().min(1),
+    isCorrect: z.boolean().optional(),
+  })).length(4).optional(),
+});
+
+function normalizeImportedQuestion(raw: unknown) {
+  const parsed = importedQuestionSchema.parse(raw);
+  const optionMap: Partial<Record<typeof questionLabels[number], string>> = {};
+
+  if (parsed.options) {
+    parsed.options.forEach((option, index) => {
+      const fallback = questionLabels[index];
+      const label = (option.label?.trim().toUpperCase() || fallback) as typeof questionLabels[number];
+      if (questionLabels.includes(label)) optionMap[label] = option.text;
+    });
+  }
+
+  if (parsed.optionA) optionMap.A = parsed.optionA;
+  if (parsed.optionB) optionMap.B = parsed.optionB;
+  if (parsed.optionC) optionMap.C = parsed.optionC;
+  if (parsed.optionD) optionMap.D = parsed.optionD;
+
+  for (const label of questionLabels) {
+    if (!optionMap[label]?.trim()) {
+      throw new Error(`Question "${parsed.stem.slice(0, 40)}" is missing option ${label}.`);
+    }
+  }
+
+  const correctLabel =
+    parsed.correctLabel ??
+    parsed.correctOption ??
+    parsed.answer ??
+    (parsed.options?.find(option => option.isCorrect)?.label?.trim().toUpperCase() as typeof questionLabels[number] | undefined) ??
+    questionLabels.find(label => optionMap[label] === parsed.correctAnswer?.trim());
+
+  if (!correctLabel || !questionLabels.includes(correctLabel)) {
+    throw new Error(`Question "${parsed.stem.slice(0, 40)}" is missing a valid correct answer.`);
+  }
+
+  return {
+    stem: parsed.stem,
+    explanation: parsed.explanation ?? '',
+    difficulty: parsed.difficulty ?? 3,
+    optionA: optionMap.A!,
+    optionB: optionMap.B!,
+    optionC: optionMap.C!,
+    optionD: optionMap.D!,
+    correctLabel,
+  };
+}
 
 // ── GET: list content by type ─────────────────────────────────────────────────
 export async function GET(request: Request) {
@@ -110,6 +196,68 @@ export async function POST(request: Request) {
       const correct = created.options.find(o => o.isCorrect);
       if (correct) await prisma.question.update({ where: { id: created.id }, data: { correctOptionId: correct.id } });
       return NextResponse.json({ message: 'Question created.' });
+    }
+    if (body.kind === 'import-json') {
+      const p = importJsonSchema.parse(body);
+
+      if (p.contentKind === 'lesson') {
+        const lessons = p.items.map(item => importedLessonSchema.parse(item));
+        await prisma.lesson.createMany({
+          data: lessons.map(item => ({
+            topicId: p.topicId,
+            title: item.title,
+            content: item.content,
+            pearls: item.pearls ?? '',
+            pitfalls: item.pitfalls ?? '',
+          })),
+        });
+        return NextResponse.json({ message: `Imported ${lessons.length} lesson${lessons.length !== 1 ? 's' : ''}.` });
+      }
+
+      if (p.contentKind === 'flashcard') {
+        const flashcards = p.items.map(item => importedFlashcardSchema.parse(item));
+        await prisma.flashcard.createMany({
+          data: flashcards.map(item => ({
+            topicId: p.topicId,
+            front: item.front,
+            back: item.back,
+            note: item.note ?? null,
+          })),
+        });
+        return NextResponse.json({ message: `Imported ${flashcards.length} flashcard${flashcards.length !== 1 ? 's' : ''}.` });
+      }
+
+      const questions = p.items.map(item => normalizeImportedQuestion(item));
+      await prisma.$transaction(async tx => {
+        for (const question of questions) {
+          const created = await tx.question.create({
+            data: {
+              topicId: p.topicId,
+              stem: question.stem,
+              explanation: question.explanation,
+              difficulty: question.difficulty,
+              options: {
+                create: [
+                  { label: 'A', text: question.optionA, isCorrect: question.correctLabel === 'A' },
+                  { label: 'B', text: question.optionB, isCorrect: question.correctLabel === 'B' },
+                  { label: 'C', text: question.optionC, isCorrect: question.correctLabel === 'C' },
+                  { label: 'D', text: question.optionD, isCorrect: question.correctLabel === 'D' },
+                ],
+              },
+            },
+            include: { options: true },
+          });
+
+          const correct = created.options.find(option => option.isCorrect);
+          if (correct) {
+            await tx.question.update({
+              where: { id: created.id },
+              data: { correctOptionId: correct.id },
+            });
+          }
+        }
+      });
+      return NextResponse.json({ message: `Imported ${questions.length} question${questions.length !== 1 ? 's' : ''}.` });
     }
     if (body.kind === 'case') {
       const p = caseSchema.parse(body);
