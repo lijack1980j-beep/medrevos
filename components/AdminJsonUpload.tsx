@@ -55,6 +55,11 @@ export function AdminJsonUpload({
   const [pending, setPending] = useState(false);
   const [fileName, setFileName] = useState('');
 
+  function openFilePicker() {
+    setStatus(null);
+    fileRef.current?.click();
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus(null);
@@ -147,9 +152,15 @@ export function AdminJsonUpload({
               type="file"
               accept=".json,application/json"
               onChange={e => setFileName(e.target.files?.[0]?.name ?? '')}
+              className="adm-upload-file-input"
               required
             />
-            <span className="muted adm-upload-file-name">{fileName || 'No file selected'}</span>
+            <div className="adm-upload-file-row">
+              <button type="button" className="btn secondary" onClick={openFilePicker}>
+                Choose file from device
+              </button>
+              <span className="muted adm-upload-file-name">{fileName || 'No file selected'}</span>
+            </div>
           </label>
 
           <div className="adm-upload-hint">
