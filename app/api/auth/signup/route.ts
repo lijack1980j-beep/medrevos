@@ -11,7 +11,10 @@ const schema = z.object({ name: z.string().min(2), email: z.string().email(), pa
 export async function POST(request: Request) {
   try {
     const { name, email, password } = schema.parse(await request.json());
-    const exists = await prisma.user.findUnique({ where: { email } });
+    const exists = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
     if (exists) return NextResponse.json({ message: 'Email already in use.' }, { status: 400 });
     const user = await prisma.user.create({ data: { name, email, passwordHash: hashPassword(password) } });
     await createSession(user.id);
