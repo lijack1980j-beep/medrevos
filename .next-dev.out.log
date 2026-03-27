@@ -1,0 +1,15 @@
+
+> med-revision-os@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3000
+  - Environments: .env.local, .env
+  - Experiments (use with caution):
+    · typedRoutes
+
+ ✓ Starting...
+ ✓ Ready in 6.9s
+ ○ Compiling /api/auth/login ...
+ ✓ Compiled /middleware in 7.8s (151 modules)
+ POST /api/auth/login 200 in 15670ms
