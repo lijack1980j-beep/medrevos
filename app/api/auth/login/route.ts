@@ -11,7 +11,10 @@ const schema = z.object({ email: z.string().email(), password: z.string().min(8)
 export async function POST(request: Request) {
   try {
     const { email, password } = schema.parse(await request.json());
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, email: true, passwordHash: true },
+    });
     if (!user || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ message: 'Invalid credentials.' }, { status: 401 });
     }

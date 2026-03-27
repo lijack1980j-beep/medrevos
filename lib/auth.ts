@@ -4,6 +4,15 @@ import { prisma } from '@/lib/db';
 
 export const SESSION_COOKIE = 'medrev_session';
 
+type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  examDate: Date | null;
+  blockedSections: string[];
+};
+
 export async function createSession(userId: string) {
   // Destroy any existing session first (prevents ghost sessions when switching accounts)
   const oldToken = cookies().get(SESSION_COOKIE)?.value;
@@ -24,13 +33,22 @@ export async function destroySession() {
 export async function getCurrentUser() {
   const token = cookies().get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const session = await prisma.session.findUnique({ where: { token }, include: { user: true } });
+  const session = await prisma.session.findUnique({ where: { token } });
   if (!session || session.expiresAt < new Date()) {
     if (session) await prisma.session.delete({ where: { token } });
     cookies().delete(SESSION_COOKIE);
     return null;
   }
-  return session.user;
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: { id: true, name: true, email: true, role: true, examDate: true },
+  });
+  if (!user) {
+    await prisma.session.delete({ where: { token } });
+    cookies().delete(SESSION_COOKIE);
+    return null;
+  }
+  return { ...user, blockedSections: [] } satisfies SessionUser;
 }
 
 export async function requireUser() {
