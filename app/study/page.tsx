@@ -5,14 +5,16 @@ import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { checkAccess } from '@/lib/access';
 import { TopicNoteEditor } from '@/components/TopicNoteEditor';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 export default async function StudyPage({ searchParams }: { searchParams?: { topic?: string } }) {
   const user = await getCurrentUser();
   checkAccess(user, 'study');
+  const topicVisibilityWhere = await getTopicVisibilityWhere(user?.id);
 
   const [topics, progressRows] = await Promise.all([
     prisma.topic.findMany({
-      where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user!.id }] },
+      where: topicVisibilityWhere,
       select: {
         id: true, slug: true, title: true, system: true, summary: true,
         difficulty: true, estMinutes: true, highYield: true,

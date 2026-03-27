@@ -3,13 +3,15 @@ export const dynamic = 'force-dynamic';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
 import { AdminShell } from '@/components/AdminShell';
+import { getGlobalTopicWhere } from '@/lib/dbCompat';
 
 export default async function AdminPage() {
   await requireAdmin();
+  const globalTopicWhere = await getGlobalTopicWhere();
 
   const [topics, userCount, topicCount, questionCount, flashcardCount, lessonCount] = await Promise.all([
     prisma.topic.findMany({
-      where: { assignedToUserId: null }, // global topics only — private user topics managed via Users panel
+      where: globalTopicWhere,
       select: {
         id: true, title: true, slug: true, system: true,
         summary: true, difficulty: true, estMinutes: true, highYield: true,

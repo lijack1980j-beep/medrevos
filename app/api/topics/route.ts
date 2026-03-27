@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 const topicSchema = z.object({
   title: z.string().min(3),
@@ -16,10 +17,7 @@ const topicSchema = z.object({
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId');
-  // Return only global topics (optionally include user-private ones if userId is provided)
-  const where = userId
-    ? { OR: [{ assignedToUserId: null as string | null }, { assignedToUserId: userId }] }
-    : { assignedToUserId: null as string | null };
+  const where = await getTopicVisibilityWhere(userId);
   const topics = await prisma.topic.findMany({ where, orderBy: { title: 'asc' } });
   return NextResponse.json(topics);
 }

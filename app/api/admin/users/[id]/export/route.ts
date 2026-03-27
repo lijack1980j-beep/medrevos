@@ -3,11 +3,13 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
+import { hasTopicAssignmentsColumn } from '@/lib/dbCompat';
 
 // ── GET: export full content pack for a user ──────────────────────────────────
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
     await requireAdmin();
+    const withAssignments = await hasTopicAssignmentsColumn();
 
     const user = await prisma.user.findUnique({
       where: { id: params.id },
@@ -16,24 +18,26 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
     if (!user) return NextResponse.json({ error: 'User not found.' }, { status: 404 });
 
-    const topics = await prisma.topic.findMany({
-      where: { assignedToUserId: params.id },
-      include: {
-        lessons: {
-          select: { id: true, title: true, content: true, pearls: true, pitfalls: true, createdAt: true },
-        },
-        questions: {
-          include: { options: { select: { label: true, text: true, isCorrect: true } } },
-        },
-        flashcards: {
-          select: { id: true, front: true, back: true, note: true, createdAt: true },
-        },
-        cases: {
-          select: { id: true, title: true, chiefComplaint: true, findings: true, investigations: true, diagnosis: true, management: true, createdAt: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const topics = withAssignments
+      ? await prisma.topic.findMany({
+          where: { assignedToUserId: params.id },
+          include: {
+            lessons: {
+              select: { id: true, title: true, content: true, pearls: true, pitfalls: true, createdAt: true },
+            },
+            questions: {
+              include: { options: { select: { label: true, text: true, isCorrect: true } } },
+            },
+            flashcards: {
+              select: { id: true, front: true, back: true, note: true, createdAt: true },
+            },
+            cases: {
+              select: { id: true, title: true, chiefComplaint: true, findings: true, investigations: true, diagnosis: true, management: true, createdAt: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        })
+      : [];
 
     const examSessions = await prisma.examSession.findMany({
       where: { userId: params.id },

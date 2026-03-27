@@ -4,12 +4,14 @@ import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { checkAccess } from '@/lib/access';
 import { ExamConfig } from '@/components/ExamConfig';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 export default async function ExamPage() {
   const user = await requireUser();
   checkAccess(user, 'exam');
+  const topicVisibilityWhere = await getTopicVisibilityWhere(user.id);
   const topics = await prisma.topic.findMany({
-    where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] },
+    where: topicVisibilityWhere,
     select: { id: true, title: true, system: true, _count: { select: { questions: true } } },
     orderBy: [{ system: 'asc' }, { title: 'asc' }],
   });

@@ -4,12 +4,14 @@ import { prisma } from '@/lib/db';
 import { CasesClient } from '@/components/CasesClient';
 import { requireUser } from '@/lib/auth';
 import { checkAccess } from '@/lib/access';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 export default async function CasesPage() {
   const user = await requireUser();
   checkAccess(user, 'cases');
+  const topicVisibilityWhere = await getTopicVisibilityWhere(user.id);
   const cases = await prisma.caseStudy.findMany({
-    where: { topic: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] } },
+    where: { topic: topicVisibilityWhere },
     include: { topic: true },
     orderBy: [{ topic: { system: 'asc' } }, { title: 'asc' }],
   });

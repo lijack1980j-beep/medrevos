@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/lib/auth';
+import { hasTopicAssignmentsColumn } from '@/lib/dbCompat';
 
 const createTopicSchema = z.object({
   kind:        z.literal('topic'),
@@ -30,13 +31,16 @@ const patchSchema = z.discriminatedUnion('kind', [
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
     await requireAdmin();
+    const withAssignments = await hasTopicAssignmentsColumn();
 
     const [topics, examSessions, calEvents] = await Promise.all([
-      prisma.topic.findMany({
-        where: { assignedToUserId: params.id },
-        include: { _count: { select: { lessons: true, questions: true, flashcards: true, cases: true } } },
-        orderBy: { createdAt: 'desc' },
-      }),
+      withAssignments
+        ? prisma.topic.findMany({
+            where: { assignedToUserId: params.id },
+            include: { _count: { select: { lessons: true, questions: true, flashcards: true, cases: true } } },
+            orderBy: { createdAt: 'desc' },
+          })
+        : Promise.resolve([]),
       prisma.examSession.findMany({
         where: { userId: params.id },
         include: { answers: { select: { isCorrect: true } } },
@@ -74,9 +78,13 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   try {
     await requireAdmin();
+    const withAssignments = await hasTopicAssignmentsColumn();
     const body = await request.json();
 
     if (body.kind === 'topic') {
+      if (!withAssignments) {
+        return NextResponse.json({ message: 'Per-user topic assignment is unavailable on this database.' }, { status: 400 });
+      }
       const p = createTopicSchema.parse(body);
       await prisma.topic.create({
         data: {
@@ -91,6 +99,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
     // ── Import (copy) content from any topic into one of the user's topics ──────
     if (body.kind === 'import') {
+      if (!withAssignments) {
+        return NextResponse.json({ message: 'Per-user topic import is unavailable on this database.' }, { status: 400 });
+      }
       const fromTopicId = z.string().min(1).parse(body.fromTopicId);
       const toTopicId   = z.string().min(1).parse(body.toTopicId);
       const types: string[] = Array.isArray(body.types)
@@ -178,10 +189,14 @@ export async function POST(request: Request, { params }: { params: { id: string 
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   try {
     await requireAdmin();
+    const withAssignments = await hasTopicAssignmentsColumn();
     const body = await request.json();
     const p = deleteSchema.parse(body);
 
     if (p.kind === 'topic') {
+      if (!withAssignments) {
+        return NextResponse.json({ message: 'Per-user topics are unavailable on this database.' }, { status: 400 });
+      }
       // Verify ownership before deleting so we surface a real error if not found
       const topic = await prisma.topic.findFirst({
         where: { id: p.id, assignedToUserId: params.id },
@@ -219,10 +234,14 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     await requireAdmin();
+    const withAssignments = await hasTopicAssignmentsColumn();
     const body = await request.json();
     const p    = patchSchema.parse(body);
 
     if (p.kind === 'assign-topic') {
+      if (!withAssignments) {
+        return NextResponse.json({ message: 'Topic assignment is unavailable on this database.' }, { status: 400 });
+      }
       // Verify topic exists and is currently global (assignedToUserId null)
       const topic = await prisma.topic.findFirst({ where: { id: p.topicId, assignedToUserId: null } });
       if (!topic) return NextResponse.json({ message: 'Topic not found or already assigned.' }, { status: 404 });
@@ -231,6 +250,9 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     }
 
     if (p.kind === 'unassign-topic') {
+      if (!withAssignments) {
+        return NextResponse.json({ message: 'Topic assignment is unavailable on this database.' }, { status: 400 });
+      }
       // Make the topic global again (visible to all)
       await prisma.topic.updateMany({
         where: { id: p.topicId, assignedToUserId: params.id },

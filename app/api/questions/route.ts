@@ -5,14 +5,16 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
 import { updateTopicProgress } from '@/lib/progress';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 const attemptSchema = z.object({ questionId: z.string().min(1), selected: z.string().min(1) });
 
 export async function GET() {
   try {
     const user = await requireUser();
+    const topicVisibilityWhere = await getTopicVisibilityWhere(user.id);
     const questions = await prisma.question.findMany({
-      where: { topic: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] } },
+      where: { topic: topicVisibilityWhere },
       include: { options: true, topic: true },
     });
     return NextResponse.json(questions);

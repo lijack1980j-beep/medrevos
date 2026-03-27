@@ -4,15 +4,17 @@ import { prisma } from '@/lib/db';
 import { QuestionBank } from '@/components/QuestionBank';
 import { getCurrentUser } from '@/lib/auth';
 import { checkAccess } from '@/lib/access';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 export default async function QuestionsPage({ searchParams }: { searchParams?: { topic?: string } }) {
   const user = await getCurrentUser();
   checkAccess(user, 'qbank');
   const topicSlug = searchParams?.topic;
+  const topicVisibilityWhere = await getTopicVisibilityWhere(user?.id);
 
   const [questions, bookmarks, wrongAttempts, allAttempts, srsStates] = await Promise.all([
     prisma.question.findMany({
-      where: { topic: { ...(topicSlug ? { slug: topicSlug } : {}), OR: [{ assignedToUserId: null }, { assignedToUserId: user!.id }] } },
+      where: { topic: { ...(topicSlug ? { slug: topicSlug } : {}), ...topicVisibilityWhere } },
       include: { options: { select: { id: true, label: true, text: true, isCorrect: true } }, topic: { select: { id: true, title: true, slug: true, system: true } } },
       orderBy: { createdAt: 'asc' },
     }),

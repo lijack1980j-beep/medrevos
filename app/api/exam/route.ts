@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { requireUser } from '@/lib/auth';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 const createSchema = z.object({
   topicIds:    z.array(z.string()).optional(),
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { topicIds, count, timeLimitSec } = createSchema.parse(body);
 
-  const userFilter = { OR: [{ assignedToUserId: null as string | null }, { assignedToUserId: user.id }] };
+  const userFilter = await getTopicVisibilityWhere(user.id);
   const questions = await prisma.question.findMany({
     where: topicIds?.length
       ? { topicId: { in: topicIds }, topic: userFilter }

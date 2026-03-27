@@ -6,6 +6,7 @@ import { FlashcardReviewClient } from '@/components/FlashcardReviewClient';
 import { CustomFlashcardForm } from '@/components/CustomFlashcardForm';
 import { requireUser } from '@/lib/auth';
 import { checkAccess } from '@/lib/access';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 export default async function FlashcardsPage({
   searchParams,
@@ -16,11 +17,12 @@ export default async function FlashcardsPage({
   checkAccess(user, 'flashcards');
   const selectedSlug = searchParams.topic ?? null;
   const freeMode = searchParams.mode === 'free';
+  const topicVisibilityWhere = await getTopicVisibilityWhere(user.id);
 
   // All flashcards with their topic info
   const [allCards, states, allTopics] = await Promise.all([
     prisma.flashcard.findMany({
-      where: { topic: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] } },
+      where: { topic: topicVisibilityWhere },
       select: { id: true, front: true, back: true, note: true, topicId: true, createdAt: true, topic: { select: { title: true, slug: true, system: true } } },
       orderBy: { createdAt: 'asc' },
     }),
@@ -28,7 +30,7 @@ export default async function FlashcardsPage({
       where: { userId: user.id },
       select: { flashcardId: true, dueDate: true, intervalDays: true, easeFactor: true, repetitions: true },
     }),
-    prisma.topic.findMany({ where: { OR: [{ assignedToUserId: null }, { assignedToUserId: user.id }] }, select: { id: true, title: true, system: true }, orderBy: { title: 'asc' } }),
+    prisma.topic.findMany({ where: topicVisibilityWhere, select: { id: true, title: true, system: true }, orderBy: { title: 'asc' } }),
   ]);
 
   const stateMap = new Map(states.map(s => [s.flashcardId, s]));

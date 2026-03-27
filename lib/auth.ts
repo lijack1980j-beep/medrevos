@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { randomBytes } from 'crypto';
 import { prisma } from '@/lib/db';
+import { hasBlockedSectionsColumn } from '@/lib/dbCompat';
 
 export const SESSION_COOKIE = 'medrev_session';
 
@@ -39,16 +40,24 @@ export async function getCurrentUser() {
     cookies().delete(SESSION_COOKIE);
     return null;
   }
+  const withBlockedSections = await hasBlockedSectionsColumn();
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { id: true, name: true, email: true, role: true, examDate: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      examDate: true,
+      ...(withBlockedSections ? { blockedSections: true } : {}),
+    },
   });
   if (!user) {
     await prisma.session.delete({ where: { token } });
     cookies().delete(SESSION_COOKIE);
     return null;
   }
-  return { ...user, blockedSections: [] } satisfies SessionUser;
+  return { ...user, blockedSections: withBlockedSections ? (user.blockedSections ?? []) : [] } satisfies SessionUser;
 }
 
 export async function requireUser() {

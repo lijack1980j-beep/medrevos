@@ -3,15 +3,14 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { getTopicVisibilityWhere } from '@/lib/dbCompat';
 
 export default async function SearchPage({ searchParams }: { searchParams: { q?: string } }) {
   const user = await getCurrentUser();
   const q = (searchParams.q ?? '').trim();
 
   // Only show content from topics visible to this user (global + their private)
-  const topicFilter = user
-    ? { OR: [{ assignedToUserId: null as string | null }, { assignedToUserId: user.id }] }
-    : { assignedToUserId: null as string | null };
+  const topicFilter = await getTopicVisibilityWhere(user?.id);
 
   const [topics, questions, flashcards, cases] = q.length >= 2 ? await Promise.all([
     prisma.topic.findMany({
