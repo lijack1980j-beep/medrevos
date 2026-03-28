@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Topic = {
@@ -48,6 +48,7 @@ export function AdminJsonUpload({
   onSaved?: () => void;
 }) {
   const router = useRouter();
+  const fileInputId = useId();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [kind, setKind] = useState<UploadKind>('question');
   const [topicId, setTopicId] = useState(topics[0]?.id ?? '');
@@ -152,6 +153,7 @@ export function AdminJsonUpload({
           <label className="adm-upload-file">
             JSON file
             <input
+              id={fileInputId}
               ref={fileRef}
               type="file"
               accept=".json,application/json"
@@ -159,8 +161,11 @@ export function AdminJsonUpload({
               className="adm-upload-file-input"
             />
             <div className="adm-upload-file-row">
-              <button type="button" className="btn secondary" onClick={openFilePicker}>
+              <label htmlFor={fileInputId} className="btn secondary adm-upload-file-label">
                 Choose file from device
+              </label>
+              <button type="button" className="btn secondary" onClick={openFilePicker}>
+                Open picker
               </button>
               <span className="muted adm-upload-file-name">{fileName || 'No file selected'}</span>
             </div>

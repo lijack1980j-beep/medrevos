@@ -3555,6 +3555,7 @@ textarea:focus, input:focus, select:focus {
   border: 0;
 }
 .adm-upload-file-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.adm-upload-file-label { cursor: pointer; display: inline-flex; align-items: center; }
 .adm-upload-file-name { font-size: 0.82rem; }
 .adm-upload-divider {
   display: flex;
