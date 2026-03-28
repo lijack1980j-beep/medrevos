@@ -64,6 +64,7 @@ export function AdminJsonUpload({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus(null);
+    const form = event.currentTarget;
 
     const file = fileRef.current?.files?.[0];
     if (!topicId) {
@@ -97,7 +98,7 @@ export function AdminJsonUpload({
       setStatus({ ok: response.ok, message });
 
       if (response.ok) {
-        event.currentTarget.reset();
+        form.reset();
         setFileName('');
         setJsonText('');
         router.refresh();
