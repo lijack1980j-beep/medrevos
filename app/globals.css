@@ -3556,6 +3556,28 @@ textarea:focus, input:focus, select:focus {
 }
 .adm-upload-file-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .adm-upload-file-name { font-size: 0.82rem; }
+.adm-upload-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.adm-upload-divider::before,
+.adm-upload-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.adm-upload-paste { display: flex; flex-direction: column; gap: 0.35rem; }
+.adm-upload-paste textarea {
+  min-height: 220px;
+  resize: vertical;
+  font-family: var(--font-space-mono), monospace;
+}
 .adm-upload-hint {
   font-size: 0.85rem;
   color: var(--muted);

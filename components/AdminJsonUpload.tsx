@@ -54,6 +54,7 @@ export function AdminJsonUpload({
   const [status, setStatus] = useState<FormStatus>(null);
   const [pending, setPending] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [jsonText, setJsonText] = useState('');
 
   function openFilePicker() {
     setStatus(null);
@@ -65,10 +66,6 @@ export function AdminJsonUpload({
     setStatus(null);
 
     const file = fileRef.current?.files?.[0];
-    if (!file) {
-      setStatus({ ok: false, message: 'Choose a JSON file first.' });
-      return;
-    }
     if (!topicId) {
       setStatus({ ok: false, message: 'Select a target topic.' });
       return;
@@ -76,7 +73,12 @@ export function AdminJsonUpload({
 
     setPending(true);
     try {
-      const text = await file.text();
+      const text = jsonText.trim() || (file ? await file.text() : '');
+      if (!text) {
+        setStatus({ ok: false, message: 'Paste JSON or choose a JSON file first.' });
+        return;
+      }
+
       const parsed = JSON.parse(text) as unknown;
       const items = getFileItems(kind, parsed);
 
@@ -97,6 +99,7 @@ export function AdminJsonUpload({
       if (response.ok) {
         event.currentTarget.reset();
         setFileName('');
+        setJsonText('');
         router.refresh();
         onSaved?.();
       }
@@ -153,7 +156,6 @@ export function AdminJsonUpload({
               accept=".json,application/json"
               onChange={e => setFileName(e.target.files?.[0]?.name ?? '')}
               className="adm-upload-file-input"
-              required
             />
             <div className="adm-upload-file-row">
               <button type="button" className="btn secondary" onClick={openFilePicker}>
@@ -161,6 +163,20 @@ export function AdminJsonUpload({
               </button>
               <span className="muted adm-upload-file-name">{fileName || 'No file selected'}</span>
             </div>
+          </label>
+
+          <div className="adm-upload-divider">
+            <span>or paste JSON</span>
+          </div>
+
+          <label className="adm-upload-paste">
+            Paste JSON
+            <textarea
+              rows={12}
+              value={jsonText}
+              onChange={e => setJsonText(e.target.value)}
+              placeholder='Paste an array or object JSON here, for example: {"questions":[...]}'
+            />
           </label>
 
           <div className="adm-upload-hint">
