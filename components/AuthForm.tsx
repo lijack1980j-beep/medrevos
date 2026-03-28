@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 
-export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
-  const params = useSearchParams();
+export function AuthForm({ mode, nextPath }: { mode: 'login' | 'signup'; nextPath?: string | null }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -21,7 +19,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
     const data = await response.json();
     if (!response.ok) { setBusy(false); return setError(data.message || 'Request failed.'); }
     // Hard navigation to fully clear Next.js Router Cache — prevents stale data from previous account
-    window.location.href = params.get('next') ?? '/dashboard';
+    window.location.href = nextPath || '/dashboard';
   }
 
   return (
